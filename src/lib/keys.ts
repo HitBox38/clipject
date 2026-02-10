@@ -99,6 +99,22 @@ export function buildCompositeKey(
 }
 
 /**
+ * Build a tracking fingerprint for an input on a page.
+ *
+ * Unlike the composite key, this omits the page title so the fingerprint
+ * remains stable even when the SPA title changes.
+ *
+ * Format: `${origin}${pathname}::${inputSignature}`
+ */
+export function buildTrackingFingerprint(
+  origin: string,
+  pathname: string,
+  inputSignature: string,
+): string {
+  return `${origin}${pathname}${KEY_PAGE_TITLE_SEP}${inputSignature}`;
+}
+
+/**
  * Build InputMeta from an element.
  */
 export function buildInputMeta(el: SupportedElement): InputMeta {

@@ -14,6 +14,7 @@ import type {
   PerInputDb,
   Snippet,
   Theme,
+  TrackedInput,
 } from "@/types/storage";
 import { ext } from "./ext";
 import {
@@ -21,7 +22,9 @@ import {
   STORAGE_KEY_GLOBAL_SNIPPETS,
   STORAGE_KEY_PER_INPUT_DB,
   STORAGE_KEY_THEME,
+  STORAGE_KEY_TRACKED_INPUTS,
 } from "./constants";
+import { buildTrackingFingerprint } from "./keys";
 
 // ---------------------------------------------------------------------------
 // Generic low-level helpers
@@ -178,6 +181,85 @@ export async function setTheme(theme: Theme): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Tracked inputs
+// ---------------------------------------------------------------------------
+
+export async function getTrackedInputs(): Promise<TrackedInput[]> {
+  return getKey<TrackedInput[]>(STORAGE_KEY_TRACKED_INPUTS, []);
+}
+
+export async function addTrackedInput(
+  input: TrackedInput,
+): Promise<void> {
+  const list = await getTrackedInputs();
+  const fingerprint = buildTrackingFingerprint(
+    input.origin,
+    input.pathname,
+    input.inputSignature,
+  );
+
+  // Avoid duplicates.
+  const exists = list.some(
+    (t) =>
+      buildTrackingFingerprint(t.origin, t.pathname, t.inputSignature) ===
+      fingerprint,
+  );
+  if (exists) return;
+
+  list.push(input);
+  await setKey(STORAGE_KEY_TRACKED_INPUTS, list);
+}
+
+export async function removeTrackedInput(
+  fingerprint: string,
+): Promise<void> {
+  const list = await getTrackedInputs();
+  await setKey(
+    STORAGE_KEY_TRACKED_INPUTS,
+    list.filter(
+      (t) =>
+        buildTrackingFingerprint(t.origin, t.pathname, t.inputSignature) !==
+        fingerprint,
+    ),
+  );
+}
+
+/**
+ * Build a set of all tracked fingerprints by merging:
+ *  1. Explicitly tracked inputs
+ *  2. Inputs that already have snippets in the per-input DB
+ *
+ * This ensures backward compat — any input with saved snippets
+ * is automatically treated as tracked.
+ */
+export async function buildTrackedFingerprintSet(): Promise<Set<string>> {
+  const [tracked, db] = await Promise.all([
+    getTrackedInputs(),
+    getPerInputDb(),
+  ]);
+
+  const set = new Set<string>();
+
+  for (const t of tracked) {
+    set.add(
+      buildTrackingFingerprint(t.origin, t.pathname, t.inputSignature),
+    );
+  }
+
+  for (const entry of Object.values(db)) {
+    set.add(
+      buildTrackingFingerprint(
+        entry.page.origin,
+        entry.page.pathname,
+        entry.input.signature,
+      ),
+    );
+  }
+
+  return set;
+}
+
+// ---------------------------------------------------------------------------
 // Bulk operations
 // ---------------------------------------------------------------------------
 
@@ -185,6 +267,7 @@ export async function clearAllData(): Promise<void> {
   await ext.storage.local.remove([
     STORAGE_KEY_PER_INPUT_DB,
     STORAGE_KEY_GLOBAL_SNIPPETS,
+    STORAGE_KEY_TRACKED_INPUTS,
   ]);
 }
 

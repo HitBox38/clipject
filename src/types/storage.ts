@@ -35,5 +35,13 @@ export type GlobalSnippet = Snippet;
 /** Supported theme modes. "system" follows the OS preference. */
 export type Theme = "light" | "dark" | "system";
 
+/** A tracked input that the picker is allowed to appear on. */
+export interface TrackedInput {
+  origin: string;
+  pathname: string;
+  inputSignature: string;
+  registeredAt: number;
+}
+
 /** Shape of the entire per-input database stored in chrome.storage.local. */
 export type PerInputDb = Record<string, InputEntry>;

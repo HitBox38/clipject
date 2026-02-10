@@ -1,9 +1,9 @@
 /**
  * Observes focus events on input/textarea elements across the page.
  *
- * When a supported field receives focus:
- *  1. Compute the page key + input signature
- *  2. Mount (or re-mount) the picker dropdown
+ * The picker only opens for inputs that have been explicitly tracked
+ * (via the popup's "Select Element" flow) or that already have saved
+ * snippets in the per-input database.
  *
  * When focus leaves all tracked elements, unmount the picker.
  *
@@ -14,15 +14,23 @@
 import {
   buildCompositeKey,
   buildInputMeta,
+  buildTrackingFingerprint,
   computeInputSignature,
   computePageKey,
   isPasswordField,
   isSupportedField,
 } from "@/lib/keys";
-import { FOCUS_DEBOUNCE_MS, STORAGE_KEY_ENABLED } from "@/lib/constants";
-import { getEnabled } from "@/lib/storage";
+import {
+  FOCUS_DEBOUNCE_MS,
+  STORAGE_KEY_ENABLED,
+  STORAGE_KEY_PER_INPUT_DB,
+  STORAGE_KEY_TRACKED_INPUTS,
+} from "@/lib/constants";
+import { buildTrackedFingerprintSet, getEnabled } from "@/lib/storage";
 import { ext } from "@/lib/ext";
 import { mountPicker, unmountPicker } from "./mount";
+import { startElementSelector, isElementSelectorActive } from "./element-selector";
+import type { ClipjectMessage } from "@/types/messages";
 
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
@@ -30,11 +38,37 @@ let activeEl: SupportedElement | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let extensionEnabled = true;
 
+/**
+ * In-memory cache of tracking fingerprints.
+ * Rebuilt from storage on init and whenever tracked inputs or
+ * per-input DB changes.
+ */
+let trackedFingerprints = new Set<string>();
+
+// ---------------------------------------------------------------------------
+// Tracked fingerprints cache
+// ---------------------------------------------------------------------------
+
+async function refreshTrackedFingerprints(): Promise<void> {
+  trackedFingerprints = await buildTrackedFingerprintSet();
+}
+
+function isInputTracked(el: SupportedElement): boolean {
+  const origin = window.location.origin;
+  const pathname = window.location.pathname;
+  const signature = computeInputSignature(el);
+  const fingerprint = buildTrackingFingerprint(origin, pathname, signature);
+  return trackedFingerprints.has(fingerprint);
+}
+
 // ---------------------------------------------------------------------------
 // Focus handlers
 // ---------------------------------------------------------------------------
 
 function handleFocusIn(event: FocusEvent): void {
+  // Don't open picker while the element-selection overlay is active.
+  if (isElementSelectorActive()) return;
+
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
   if (!isSupportedField(target)) return;
@@ -83,6 +117,9 @@ function handleClickOutside(event: MouseEvent): void {
 
 async function openPickerFor(el: SupportedElement): Promise<void> {
   if (!extensionEnabled) return;
+
+  // Only open the picker for inputs that are tracked.
+  if (!isInputTracked(el)) return;
 
   activeEl = el;
 
@@ -139,18 +176,45 @@ function watchTitleChanges(): MutationObserver {
 }
 
 // ---------------------------------------------------------------------------
-// Enabled-state listener
+// Storage-change listeners
 // ---------------------------------------------------------------------------
 
-function watchEnabledState(): void {
+function watchStorageChanges(): void {
   ext.storage.onChanged.addListener((changes) => {
+    // Enabled flag.
     if (STORAGE_KEY_ENABLED in changes) {
-      extensionEnabled = (changes[STORAGE_KEY_ENABLED].newValue as boolean) ?? true;
+      extensionEnabled =
+        (changes[STORAGE_KEY_ENABLED].newValue as boolean) ?? true;
       if (!extensionEnabled) {
         closePicker();
       }
     }
+
+    // Tracked inputs or per-input DB changed — rebuild the fingerprint cache.
+    if (
+      STORAGE_KEY_TRACKED_INPUTS in changes ||
+      STORAGE_KEY_PER_INPUT_DB in changes
+    ) {
+      void refreshTrackedFingerprints();
+    }
   });
+}
+
+// ---------------------------------------------------------------------------
+// Message listener (popup -> content)
+// ---------------------------------------------------------------------------
+
+function watchMessages(): void {
+  ext.runtime.onMessage.addListener(
+    (message: ClipjectMessage, _sender, sendResponse) => {
+      if (message.type === "CLIPJECT_START_ELEMENT_SELECTION") {
+        startElementSelector();
+        sendResponse({ ok: true });
+      }
+      // Return false (synchronous) — no async response needed.
+      return false;
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -158,10 +222,11 @@ function watchEnabledState(): void {
 // ---------------------------------------------------------------------------
 
 export function initObserver(): void {
-  // Hydrate the enabled flag.
+  // Hydrate the enabled flag and tracked-fingerprint cache.
   void getEnabled().then((v) => {
     extensionEnabled = v;
   });
+  void refreshTrackedFingerprints();
 
   // Focus / click events.
   document.addEventListener("focusin", handleFocusIn, { capture: true });
@@ -173,6 +238,9 @@ export function initObserver(): void {
   window.addEventListener("hashchange", onSpaNavigation);
   watchTitleChanges();
 
-  // Enabled state from storage.
-  watchEnabledState();
+  // Storage change watchers (enabled state + tracked inputs).
+  watchStorageChanges();
+
+  // Listen for messages from popup / background.
+  watchMessages();
 }
