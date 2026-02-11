@@ -5,7 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CloneEntrySection } from "./components/clone-entry-section";
 import { DangerZone } from "./components/danger-zone";
+import { ImportExportSection } from "./components/import-export-section";
+import { ImportSharedSection } from "./components/import-shared-section";
 import { ThemeSection } from "./components/theme-section";
 
 export function SettingsPage() {
@@ -20,6 +23,9 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <ThemeSection />
+          <ImportExportSection />
+          <ImportSharedSection />
+          <CloneEntrySection />
           <DangerZone />
         </CardContent>
       </Card>

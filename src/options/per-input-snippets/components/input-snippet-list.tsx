@@ -69,6 +69,8 @@ export function InputSnippetList({
               key={s.id}
               snippet={s}
               compositeKey={compositeKey}
+              pageMeta={entry.page}
+              inputMeta={entry.input}
               onEdit={onEditSnippet}
               onDelete={onDeleteSnippet}
             />

@@ -45,3 +45,38 @@ export interface TrackedInput {
 
 /** Shape of the entire per-input database stored in chrome.storage.local. */
 export type PerInputDb = Record<string, InputEntry>;
+
+// ---------------------------------------------------------------------------
+// Import / Export
+// ---------------------------------------------------------------------------
+
+/** Versioned envelope for full database export. */
+export interface ClipjectExportPayload {
+  source: "clipject";
+  version: 1;
+  exportedAt: number;
+  data: {
+    globalSnippets: GlobalSnippet[];
+    perInputDb: PerInputDb;
+    trackedInputs: TrackedInput[];
+  };
+}
+
+/** Counts returned after an import so the UI can show a summary. */
+export interface ImportResult {
+  globalSnippets: number;
+  perInputEntries: number;
+  trackedInputs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Sharing
+// ---------------------------------------------------------------------------
+
+/** Payload encoded into a share string for a single per-input snippet. */
+export interface SharedSnippetPayload {
+  type: "per-input-snippet";
+  page: PageMeta;
+  input: InputMeta;
+  snippet: Snippet;
+}

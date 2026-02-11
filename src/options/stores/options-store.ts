@@ -1,18 +1,22 @@
 import { create } from "zustand";
 import type {
+  ClipjectExportPayload,
   GlobalSnippet,
+  ImportResult,
   InputEntry,
   PerInputDb,
   Snippet,
 } from "@/types/storage";
 import {
   clearAllData,
+  cloneInputEntry,
   createSnippet,
   deleteGlobalSnippet,
   deleteInputEntry,
   deleteInputSnippet,
   getGlobalSnippets,
   getPerInputDb,
+  importAllData,
   saveGlobalSnippet,
   updateGlobalSnippet,
   updateInputSnippet,
@@ -56,6 +60,20 @@ interface OptionsState {
 
   // Bulk
   clearAll: () => Promise<void>;
+
+  // Import / Export
+  importData: (
+    payload: ClipjectExportPayload,
+    strategy: "merge" | "replace",
+  ) => Promise<ImportResult>;
+
+  // Clone
+  cloneEntry: (
+    sourceKey: string,
+    targetOrigin: string,
+    targetPathname: string,
+    targetInputSignature?: string,
+  ) => Promise<number>;
 }
 
 export const useOptionsStore = create<OptionsState>((set, get) => ({
@@ -124,6 +142,27 @@ export const useOptionsStore = create<OptionsState>((set, get) => ({
       perInputDb: {},
       selectedEntryKey: null,
     });
+  },
+
+  // ---- Import / Export ----
+
+  async importData(payload, strategy) {
+    const result = await importAllData(payload, strategy);
+    await get().loadAll();
+    return result;
+  },
+
+  // ---- Clone ----
+
+  async cloneEntry(sourceKey, targetOrigin, targetPathname, targetInputSig) {
+    const count = await cloneInputEntry(
+      sourceKey,
+      targetOrigin,
+      targetPathname,
+      targetInputSig,
+    );
+    await get().loadAll();
+    return count;
   },
 }));
 

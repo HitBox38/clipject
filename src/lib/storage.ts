@@ -7,7 +7,9 @@
  */
 
 import type {
+  ClipjectExportPayload,
   GlobalSnippet,
+  ImportResult,
   InputEntry,
   InputMeta,
   PageMeta,
@@ -18,6 +20,7 @@ import type {
 } from "@/types/storage";
 import { ext } from "./ext";
 import {
+  KEY_PAGE_TITLE_SEP,
   STORAGE_KEY_ENABLED,
   STORAGE_KEY_GLOBAL_SNIPPETS,
   STORAGE_KEY_PER_INPUT_DB,
@@ -269,6 +272,183 @@ export async function clearAllData(): Promise<void> {
     STORAGE_KEY_GLOBAL_SNIPPETS,
     STORAGE_KEY_TRACKED_INPUTS,
   ]);
+}
+
+// ---------------------------------------------------------------------------
+// Full export
+// ---------------------------------------------------------------------------
+
+/**
+ * Read all user data and wrap it in a versioned export envelope.
+ */
+export async function exportAllData(): Promise<ClipjectExportPayload> {
+  const [globalSnippets, perInputDb, trackedInputs] = await Promise.all([
+    getGlobalSnippets(),
+    getPerInputDb(),
+    getTrackedInputs(),
+  ]);
+
+  return {
+    source: "clipject",
+    version: 1,
+    exportedAt: Date.now(),
+    data: { globalSnippets, perInputDb, trackedInputs },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Full import
+// ---------------------------------------------------------------------------
+
+/**
+ * Import a validated export payload into storage.
+ *
+ * @param payload  Must already be validated via `validateExportPayload`.
+ * @param strategy "replace" wipes existing data first;
+ *                 "merge" adds incoming data on top of what already exists.
+ * @returns Counts of what was imported so the UI can show a summary.
+ */
+export async function importAllData(
+  payload: ClipjectExportPayload,
+  strategy: "merge" | "replace",
+): Promise<ImportResult> {
+  const { globalSnippets, perInputDb, trackedInputs } = payload.data;
+
+  if (strategy === "replace") {
+    await clearAllData();
+    await setKey(STORAGE_KEY_GLOBAL_SNIPPETS, globalSnippets);
+    await setKey(STORAGE_KEY_PER_INPUT_DB, perInputDb);
+    await setKey(STORAGE_KEY_TRACKED_INPUTS, trackedInputs);
+  } else {
+    // --- merge global snippets (skip duplicates by id) ---
+    const existingGlobal = await getGlobalSnippets();
+    const existingGlobalIds = new Set(existingGlobal.map((s) => s.id));
+    for (const s of globalSnippets) {
+      if (!existingGlobalIds.has(s.id)) {
+        existingGlobal.push(s);
+      }
+    }
+    await setKey(STORAGE_KEY_GLOBAL_SNIPPETS, existingGlobal);
+
+    // --- merge per-input DB (merge snippets within entries) ---
+    const existingDb = await getPerInputDb();
+    for (const [key, entry] of Object.entries(perInputDb)) {
+      const existing = existingDb[key];
+      if (existing) {
+        const existingIds = new Set(existing.snippets.map((s) => s.id));
+        for (const s of entry.snippets) {
+          if (!existingIds.has(s.id)) {
+            existing.snippets.push(s);
+          }
+        }
+        // Update page title if the import is newer.
+        if (entry.input.lastSeenAt > existing.input.lastSeenAt) {
+          existing.page.titleLastSeen = entry.page.titleLastSeen;
+          existing.input.lastSeenAt = entry.input.lastSeenAt;
+        }
+      } else {
+        existingDb[key] = entry;
+      }
+    }
+    await setKey(STORAGE_KEY_PER_INPUT_DB, existingDb);
+
+    // --- merge tracked inputs (skip duplicates by fingerprint) ---
+    const existingTracked = await getTrackedInputs();
+    const existingFingerprints = new Set(
+      existingTracked.map((t) =>
+        buildTrackingFingerprint(t.origin, t.pathname, t.inputSignature),
+      ),
+    );
+    for (const t of trackedInputs) {
+      const fp = buildTrackingFingerprint(
+        t.origin,
+        t.pathname,
+        t.inputSignature,
+      );
+      if (!existingFingerprints.has(fp)) {
+        existingTracked.push(t);
+        existingFingerprints.add(fp);
+      }
+    }
+    await setKey(STORAGE_KEY_TRACKED_INPUTS, existingTracked);
+  }
+
+  return {
+    globalSnippets: globalSnippets.length,
+    perInputEntries: Object.keys(perInputDb).length,
+    trackedInputs: trackedInputs.length,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Clone per-input entry to another domain
+// ---------------------------------------------------------------------------
+
+/**
+ * Deep-clone a per-input entry to a new target origin/pathname.
+ *
+ * All snippets receive fresh IDs so the clone is fully independent of
+ * the source. A tracked input is also created for the new target.
+ *
+ * @returns The number of snippets cloned.
+ */
+export async function cloneInputEntry(
+  sourceKey: string,
+  targetOrigin: string,
+  targetPathname: string,
+  targetInputSignature?: string,
+): Promise<number> {
+  const db = await getPerInputDb();
+  const source = db[sourceKey];
+  if (!source) {
+    throw new Error(`Source entry "${sourceKey}" not found.`);
+  }
+
+  const inputSig = targetInputSignature ?? source.input.signature;
+  const now = Date.now();
+
+  // Build the new composite key: origin + pathname :: title :: inputSignature
+  // We reuse the source's last-seen title since the user hasn't visited the
+  // target yet — it will be updated on first visit.
+  const pageKey = `${targetOrigin}${targetPathname}${KEY_PAGE_TITLE_SEP}${source.page.titleLastSeen}`;
+  const compositeKey = `${pageKey}${KEY_PAGE_TITLE_SEP}${inputSig}`;
+
+  // Deep-clone snippets with fresh IDs.
+  const clonedSnippets: Snippet[] = source.snippets.map((s) => ({
+    id: crypto.randomUUID(),
+    value: s.value,
+    label: s.label,
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  const newEntry: InputEntry = {
+    page: {
+      origin: targetOrigin,
+      pathname: targetPathname,
+      titleLastSeen: source.page.titleLastSeen,
+    },
+    input: {
+      signature: inputSig,
+      tag: source.input.tag,
+      type: source.input.type,
+      lastSeenAt: now,
+    },
+    snippets: clonedSnippets,
+  };
+
+  db[compositeKey] = newEntry;
+  await setKey(STORAGE_KEY_PER_INPUT_DB, db);
+
+  // Also track the new input.
+  await addTrackedInput({
+    origin: targetOrigin,
+    pathname: targetPathname,
+    inputSignature: inputSig,
+    registeredAt: now,
+  });
+
+  return clonedSnippets.length;
 }
 
 // ---------------------------------------------------------------------------
