@@ -1,11 +1,9 @@
-/**
- * Browser API wrapper for cross-browser compatibility.
- * Chrome uses `chrome.*`, Firefox uses `browser.*` (promise-based).
- * This wrapper normalises the difference so all call-sites use `ext.*`.
- */
-
 type ExtBrowser = typeof chrome;
+type ExtensionGlobals = typeof globalThis & {
+  browser?: ExtBrowser;
+  chrome?: ExtBrowser;
+};
 
-export const ext: ExtBrowser =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any).browser ?? (globalThis as any).chrome;
+const globals = globalThis as ExtensionGlobals;
+
+export const ext: ExtBrowser = globals.browser ?? globals.chrome;

@@ -5,12 +5,6 @@ interface Props {
   onCancel: () => void;
 }
 
-/**
- * Inline form for creating a new snippet.
- * Uses shadcn-matched input/textarea/button primitives.
- * Clicking inside the form allows focus (stopPropagation prevents
- * the picker's blanket preventDefault from blocking it).
- */
 export function AddSnippetForm({ onSave, onCancel }: Props) {
   const [value, setValue] = useState("");
   const [label, setLabel] = useState("");
@@ -23,10 +17,13 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
   }, [value, label, scope, onSave]);
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
+    <form
       className="clipject-form"
       onMouseDown={(e) => e.stopPropagation()}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit();
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
@@ -38,7 +35,6 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
         }
       }}
     >
-      {/* Snippet text */}
       <div className="cj-field">
         <label className="cj-label">Snippet text</label>
         <textarea
@@ -50,7 +46,6 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
         />
       </div>
 
-      {/* Optional label */}
       <div className="cj-field">
         <label className="cj-label">Label (optional)</label>
         <input
@@ -62,7 +57,6 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
         />
       </div>
 
-      {/* Scope toggle + save / cancel */}
       <div className="clipject-form-row">
         <div className="clipject-scope">
           <button
@@ -90,15 +84,14 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
             Cancel
           </button>
           <button
-            type="button"
+            type="submit"
             className="cj-btn cj-btn--default cj-btn--xs"
-            onClick={handleSubmit}
             disabled={!value.trim()}
           >
             Save
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

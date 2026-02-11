@@ -70,8 +70,7 @@ export function Picker({
 
   useEffect(() => {
     setHighlightedIndex(filteredAll.length > 0 ? 0 : -1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [filteredAll.length, setHighlightedIndex]);
 
   const handleSaveCurrentValue = useCallback(async () => {
     const currentValue = inputEl.value.trim();

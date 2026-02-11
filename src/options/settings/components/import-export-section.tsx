@@ -66,7 +66,12 @@ export function ImportExportSection() {
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const raw: unknown = JSON.parse(reader.result as string);
+          if (typeof reader.result !== "string") {
+            setImportError("The selected file could not be parsed as text.");
+            return;
+          }
+
+          const raw: unknown = JSON.parse(reader.result);
           const result = validateExportPayload(raw);
           if (!result.ok) {
             setImportError(result.error);

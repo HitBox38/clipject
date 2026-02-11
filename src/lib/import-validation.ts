@@ -165,6 +165,19 @@ export function validateExportPayload(raw: unknown): ValidationResult {
     if (err) return { ok: false, error: err };
   }
 
-  // If we made it here, the shape is correct — cast is safe.
-  return { ok: true, payload: raw as unknown as ClipjectExportPayload };
+  const payload: ClipjectExportPayload = {
+    source: "clipject",
+    version: 1,
+    exportedAt: raw.exportedAt,
+    data: {
+      globalSnippets:
+        data.globalSnippets as ClipjectExportPayload["data"]["globalSnippets"],
+      perInputDb:
+        data.perInputDb as ClipjectExportPayload["data"]["perInputDb"],
+      trackedInputs:
+        data.trackedInputs as ClipjectExportPayload["data"]["trackedInputs"],
+    },
+  };
+
+  return { ok: true, payload };
 }
