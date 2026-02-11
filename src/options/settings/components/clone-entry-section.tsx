@@ -52,10 +52,12 @@ export function CloneEntrySection() {
 
   // Pre-fill target fields when a source is selected.
   const handleSourceChange = useCallback(
-    (key: string) => {
-      setSourceKey(key);
+    (key: string | null) => {
+      setSourceKey(key ?? "");
       setError(null);
       setSuccess(null);
+
+      if (!key) return;
 
       const entry = perInputDb[key];
       if (entry) {
