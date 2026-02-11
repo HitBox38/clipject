@@ -5,7 +5,7 @@ interface Props {
 }
 
 /**
- * Footer bar with "Save current value" and "Add new" buttons.
+ * Footer bar with shadcn-styled action buttons.
  */
 export function PickerFooter({
   onSaveCurrentValue,
@@ -17,15 +17,15 @@ export function PickerFooter({
       {hasCurrentValue && (
         <button
           type="button"
-          className="clipject-footer-btn"
+          className="cj-btn cj-btn--outline cj-btn--sm"
           onClick={onSaveCurrentValue}
         >
-          Save current value
+          Save current
         </button>
       )}
       <button
         type="button"
-        className="clipject-footer-btn primary"
+        className="cj-btn cj-btn--default cj-btn--sm"
         onClick={onAddNew}
       >
         + Add new

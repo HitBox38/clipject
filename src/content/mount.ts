@@ -12,6 +12,11 @@ import type { PickerProps } from "./picker/types";
 import { PICKER_Z_INDEX } from "@/lib/constants";
 import { initPickerTheme } from "./theme-bridge";
 
+// Vite resolves these to hashed asset URLs at build time.
+// In the crxjs content-script context they become chrome-extension:// URLs.
+import outfitLatinUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
+import outfitLatinExtUrl from "@fontsource-variable/outfit/files/outfit-latin-ext-wght-normal.woff2?url";
+
 const HOST_ID = "clipject-picker-host";
 
 let shadowHost: HTMLDivElement | null = null;
@@ -89,338 +94,528 @@ export function unmountPicker(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Scoped CSS for the picker — no Tailwind here, everything is hand-rolled
-// so it can't clash with the host page.
+// Scoped CSS for the picker.
+//
+// Faithfully reproduces the shadcn/ui design system used across the
+// extension's Popup and Options pages.  Every button variant, input style,
+// spacing value, and color token is pixel-matched to the Tailwind/shadcn
+// output so the picker feels like a natural part of the app.
+//
+// The stylesheet is split into:
+//   1. @font-face + @keyframes
+//   2. Design tokens (light / dark)
+//   3. Reset
+//   4. Reusable primitives (buttons, inputs, separators, labels)
+//   5. Picker layout (header, search, list, items, footer, form, resize)
 // ---------------------------------------------------------------------------
 
 function getPickerCSS(): string {
   return /* css */ `
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+
+    /* ==================================================================
+       1.  @font-face  +  @keyframes
+    ================================================================== */
+
+    @font-face {
+      font-family: 'Outfit Variable';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url('${outfitLatinExtUrl}') format('woff2-variations');
+      unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
     }
+
+    @font-face {
+      font-family: 'Outfit Variable';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url('${outfitLatinUrl}') format('woff2-variations');
+      unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+
+    @keyframes cj-fade-in {
+      from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ==================================================================
+       2.  Design tokens  (mirrored 1-to-1 from src/index.css)
+    ================================================================== */
+
+    #clipject-root {
+      --cj-background:   oklch(1 0 0);
+      --cj-foreground:   oklch(0.141 0.005 285.823);
+      --cj-popover:      oklch(1 0 0);
+      --cj-popover-fg:   oklch(0.141 0.005 285.823);
+      --cj-primary:      oklch(0.60 0.10 185);
+      --cj-primary-fg:   oklch(0.98 0.01 181);
+      --cj-secondary:    oklch(0.967 0.001 286.375);
+      --cj-secondary-fg: oklch(0.21 0.006 285.885);
+      --cj-muted:        oklch(0.967 0.001 286.375);
+      --cj-muted-fg:     oklch(0.552 0.016 285.938);
+      --cj-border:       oklch(0.92 0.004 286.32);
+      --cj-input:        oklch(0.92 0.004 286.32);
+      --cj-ring:         oklch(0.705 0.015 286.067);
+      --cj-radius:       0.625rem;
+    }
+
+    #clipject-root.dark {
+      --cj-background:   oklch(0.141 0.005 285.823);
+      --cj-foreground:   oklch(0.985 0 0);
+      --cj-popover:      oklch(0.21 0.006 285.885);
+      --cj-popover-fg:   oklch(0.985 0 0);
+      --cj-primary:      oklch(0.70 0.12 183);
+      --cj-primary-fg:   oklch(0.28 0.04 193);
+      --cj-secondary:    oklch(0.274 0.006 286.033);
+      --cj-secondary-fg: oklch(0.985 0 0);
+      --cj-muted:        oklch(0.274 0.006 286.033);
+      --cj-muted-fg:     oklch(0.705 0.015 286.067);
+      --cj-border:       oklch(1 0 0 / 10%);
+      --cj-input:        oklch(1 0 0 / 15%);
+      --cj-ring:         oklch(0.552 0.016 285.938);
+    }
+
+    /* ==================================================================
+       3.  Reset
+    ================================================================== */
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ==================================================================
+       4a.  Separator  (matches shadcn Separator)
+    ================================================================== */
+
+    .cj-separator {
+      height: 1px;
+      width: 100%;
+      background: var(--cj-border);
+      flex-shrink: 0;
+    }
+
+    /* ==================================================================
+       4b.  Button system  (matches shadcn Button exactly)
+
+       Size tokens:
+         xs  →  h-6  (24px), text-xs (12px), rounded 8px, px-2 (8px)
+         sm  →  h-7  (28px), text-[0.8rem] (12.8px), rounded 8px, px-2.5 (10px)
+    ================================================================== */
+
+    .cj-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      font-weight: 500;
+      font-family: inherit;
+      border: 1px solid transparent;
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: all 0.15s;
+    }
+
+    .cj-btn svg {
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+
+    .cj-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+
+    .cj-btn:focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--cj-ring) 50%, transparent);
+      border-color: var(--cj-ring);
+    }
+
+    /* --- sizes --- */
+
+    .cj-btn--xs {
+      height: 24px;
+      gap: 4px;
+      padding: 0 8px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    .cj-btn--xs svg { width: 12px; height: 12px; }
+
+    .cj-btn--sm {
+      height: 28px;
+      gap: 4px;
+      padding: 0 10px;
+      font-size: 12.8px;
+      border-radius: 8px;
+    }
+
+    .cj-btn--sm svg { width: 14px; height: 14px; }
+
+    .cj-btn--icon-xs {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 8px;
+    }
+
+    .cj-btn--icon-xs svg { width: 12px; height: 12px; }
+
+    /* --- variants --- */
+
+    .cj-btn--default {
+      background: var(--cj-primary);
+      color: var(--cj-primary-fg);
+    }
+
+    .cj-btn--outline {
+      border-color: var(--cj-border);
+      background: transparent;
+      color: var(--cj-popover-fg);
+    }
+
+    .cj-btn--outline:hover {
+      background: var(--cj-muted);
+      color: var(--cj-popover-fg);
+    }
+
+    .cj-btn--secondary {
+      background: var(--cj-secondary);
+      color: var(--cj-secondary-fg);
+    }
+
+    .cj-btn--secondary:hover {
+      background: color-mix(in oklch, var(--cj-secondary) 80%, transparent);
+    }
+
+    .cj-btn--ghost {
+      background: transparent;
+      color: var(--cj-popover-fg);
+    }
+
+    .cj-btn--ghost:hover {
+      background: var(--cj-muted);
+    }
+
+    /* dark-mode outline button: subtle fill like shadcn dark:bg-input/30 */
+    .dark .cj-btn--outline {
+      background: color-mix(in oklch, var(--cj-input) 30%, transparent);
+      border-color: var(--cj-input);
+    }
+
+    .dark .cj-btn--outline:hover {
+      background: color-mix(in oklch, var(--cj-input) 50%, transparent);
+    }
+
+    /* ==================================================================
+       4c.  Input  (matches shadcn Input — h-8, rounded-lg)
+    ================================================================== */
+
+    .cj-input {
+      width: 100%;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--cj-input);
+      border-radius: var(--cj-radius);
+      padding: 4px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .cj-input:focus {
+      border-color: var(--cj-ring);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--cj-ring) 50%, transparent);
+    }
+
+    .cj-input::placeholder { color: var(--cj-muted-fg); }
+
+    .dark .cj-input {
+      background: color-mix(in oklch, var(--cj-input) 30%, transparent);
+    }
+
+    /* ==================================================================
+       4d.  Textarea  (matches shadcn Textarea — rounded-lg, min-h-16)
+    ================================================================== */
+
+    .cj-textarea {
+      width: 100%;
+      min-height: 64px;
+      background: transparent;
+      border: 1px solid var(--cj-input);
+      border-radius: var(--cj-radius);
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      field-sizing: content;
+    }
+
+    .cj-textarea:focus {
+      border-color: var(--cj-ring);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--cj-ring) 50%, transparent);
+    }
+
+    .cj-textarea::placeholder { color: var(--cj-muted-fg); }
+
+    .dark .cj-textarea {
+      background: color-mix(in oklch, var(--cj-input) 30%, transparent);
+    }
+
+    /* ==================================================================
+       4e.  Label  (matches shadcn Label — text-sm, font-medium)
+    ================================================================== */
+
+    .cj-label {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--cj-popover-fg);
+    }
+
+    /* ==================================================================
+       4f.  Field wrapper  (label + input group, gap-1.5 = 6px)
+    ================================================================== */
+
+    .cj-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ==================================================================
+       5a.  Picker container
+    ================================================================== */
 
     .clipject-picker {
       position: fixed;
       pointer-events: auto;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
+      font-family: 'Outfit Variable', system-ui, -apple-system, sans-serif;
       font-size: 13px;
-      line-height: 1.4;
-      color: #1a1a1a;
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12),
-                  0 1px 4px rgba(0, 0, 0, 0.08);
+      line-height: 1.5;
+      color: var(--cj-popover-fg);
+      background: var(--cj-popover);
+      border-radius: calc(var(--cj-radius) + 4px);          /* rounded-xl = 14px */
+      box-shadow:
+        0 0 0 1px color-mix(in oklch, var(--cj-foreground) 10%, transparent),
+        0 4px 6px -1px rgb(0 0 0 / 0.1),
+        0 2px 4px -2px rgb(0 0 0 / 0.1);
       width: 280px;
-      max-height: 320px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       z-index: ${PICKER_Z_INDEX};
+      animation: cj-fade-in 0.15s ease-out;
     }
 
-    .clipject-picker-header {
+    /* ==================================================================
+       5b.  Header  (matches popup header pattern)
+    ================================================================== */
+
+    .clipject-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+
+    .clipject-title {
+      font-size: 13px;
       font-weight: 600;
-      font-size: 12px;
-      color: #555;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
     }
 
-    .clipject-close-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #999;
-      font-size: 16px;
-      line-height: 1;
-      padding: 2px 4px;
-      border-radius: 4px;
+    /* ==================================================================
+       5c.  Search
+    ================================================================== */
+
+    .clipject-search {
+      padding: 0 8px 8px;
+      flex-shrink: 0;
     }
 
-    .clipject-close-btn:hover {
-      background: #f5f5f5;
-      color: #333;
+    .clipject-search-wrap {
+      position: relative;
     }
 
-    .clipject-section-label {
-      padding: 6px 12px 4px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #999;
+    .clipject-search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      color: var(--cj-muted-fg);
+      pointer-events: none;
     }
+
+    .clipject-search .cj-input {
+      padding-left: 30px;
+    }
+
+    /* ==================================================================
+       5d.  Snippet list
+    ================================================================== */
 
     .clipject-list {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 0;
+      padding: 4px;
     }
+
+    .clipject-section-label {
+      padding: 6px 8px 4px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--cj-muted-fg);
+    }
+
+    /* ==================================================================
+       5e.  Snippet item  (stacked label/value, matches options rows)
+    ================================================================== */
 
     .clipject-item {
       display: flex;
-      align-items: center;
-      padding: 6px 12px;
+      flex-direction: column;
+      gap: 1px;
+      padding: 7px 8px;
       cursor: pointer;
       border: none;
       background: none;
       width: 100%;
       text-align: left;
-      font-size: 13px;
-      color: #1a1a1a;
-      gap: 8px;
+      color: var(--cj-popover-fg);
+      font-family: inherit;
+      border-radius: calc(var(--cj-radius) - 4px);
+      transition: background 0.12s ease;
     }
 
     .clipject-item:hover,
     .clipject-item.highlighted {
-      background: #f0f7ff;
+      background: var(--cj-muted);
     }
 
     .clipject-item-label {
+      font-size: 13px;
       font-weight: 500;
+      line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      flex-shrink: 0;
-      max-width: 100px;
     }
 
     .clipject-item-value {
+      font-size: 12px;
+      line-height: 1.3;
+      color: var(--cj-muted-fg);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #666;
-      flex: 1;
-      min-width: 0;
+    }
+
+    /* value-only items (no label) use slightly larger text */
+    .clipject-item-value:only-child {
+      font-size: 13px;
     }
 
     .clipject-empty {
-      padding: 16px 12px;
+      padding: 24px 16px;
       text-align: center;
-      color: #999;
-      font-size: 12px;
+      color: var(--cj-muted-fg);
+      font-size: 13px;
     }
 
+    /* ==================================================================
+       5f.  Footer
+    ================================================================== */
+
     .clipject-footer {
-      border-top: 1px solid #f0f0f0;
-      padding: 6px 8px;
+      padding: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .clipject-footer .cj-btn { flex: 1; }
+
+    /* ==================================================================
+       5g.  Add-snippet form
+    ================================================================== */
+
+    .clipject-form {
+      padding: 8px 12px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .clipject-form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .clipject-scope {
       display: flex;
       gap: 4px;
     }
 
-    .clipject-footer-btn {
-      flex: 1;
-      background: none;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 11px;
-      cursor: pointer;
-      color: #444;
-      text-align: center;
-    }
-
-    .clipject-footer-btn:hover {
-      background: #f5f5f5;
-      border-color: #ccc;
-    }
-
-    .clipject-footer-btn.primary {
-      background: #33a89e;
-      color: #fff;
-      border-color: #33a89e;
-    }
-
-    .clipject-footer-btn.primary:hover {
-      background: #2b9389;
-    }
-
-    .clipject-add-form {
-      padding: 8px 12px;
-      border-top: 1px solid #f0f0f0;
+    .clipject-form-actions {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
-    .clipject-add-form textarea {
-      width: 100%;
-      min-height: 48px;
-      resize: vertical;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-    }
+    /* ==================================================================
+       5h.  Resize handle
+    ================================================================== */
 
-    .clipject-add-form textarea:focus {
-      border-color: #33a89e;
-      box-shadow: 0 0 0 2px rgba(51, 168, 158, 0.15);
-    }
-
-    .clipject-add-form input[type="text"] {
-      width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .clipject-add-form input[type="text"]:focus {
-      border-color: #33a89e;
-      box-shadow: 0 0 0 2px rgba(51, 168, 158, 0.15);
-    }
-
-    .clipject-add-row {
+    .clipject-resize-handle {
+      height: 12px;
+      cursor: row-resize;
       display: flex;
-      gap: 6px;
       align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .clipject-scope-toggle {
-      display: flex;
-      gap: 0;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      overflow: hidden;
-      font-size: 11px;
+    .clipject-resize-handle::after {
+      content: '';
+      width: 32px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--cj-border);
+      transition: background 0.15s;
     }
 
-    .clipject-scope-btn {
-      border: none;
-      background: #fff;
-      padding: 4px 8px;
-      cursor: pointer;
-      color: #666;
+    .clipject-resize-handle:hover::after {
+      background: var(--cj-muted-fg);
     }
 
-    .clipject-scope-btn.active {
-      background: #33a89e;
-      color: #fff;
+    /* ==================================================================
+       5i.  Scrollbar
+    ================================================================== */
+
+    .clipject-list::-webkit-scrollbar { width: 6px; }
+    .clipject-list::-webkit-scrollbar-track { background: transparent; }
+
+    .clipject-list::-webkit-scrollbar-thumb {
+      background: color-mix(in oklch, var(--cj-muted-fg) 35%, transparent);
+      border-radius: 3px;
     }
 
-    /* ---------------------------------------------------------------
-       Dark mode — scoped to .dark on #clipject-root
-    --------------------------------------------------------------- */
-
-    .dark .clipject-picker {
-      color: #e5e5ea;
-      background: #1c1c1e;
-      border-color: #38383a;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4),
-                  0 1px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .dark .clipject-picker-header {
-      border-bottom-color: #2c2c2e;
-      color: #8e8e93;
-    }
-
-    .dark .clipject-close-btn {
-      color: #8e8e93;
-    }
-
-    .dark .clipject-close-btn:hover {
-      background: #2c2c2e;
-      color: #e5e5ea;
-    }
-
-    .dark .clipject-section-label {
-      color: #8e8e93;
-    }
-
-    .dark .clipject-item {
-      color: #e5e5ea;
-    }
-
-    .dark .clipject-item:hover,
-    .dark .clipject-item.highlighted {
-      background: #2c2c2e;
-    }
-
-    .dark .clipject-item-value {
-      color: #8e8e93;
-    }
-
-    .dark .clipject-empty {
-      color: #8e8e93;
-    }
-
-    .dark .clipject-footer {
-      border-top-color: #2c2c2e;
-    }
-
-    .dark .clipject-footer-btn {
-      border-color: #38383a;
-      color: #e5e5ea;
-    }
-
-    .dark .clipject-footer-btn:hover {
-      background: #2c2c2e;
-      border-color: #48484a;
-    }
-
-    .dark .clipject-footer-btn.primary {
-      background: #33a89e;
-      color: #fff;
-      border-color: #33a89e;
-    }
-
-    .dark .clipject-footer-btn.primary:hover {
-      background: #2b9389;
-    }
-
-    .dark .clipject-add-form {
-      border-top-color: #2c2c2e;
-    }
-
-    .dark .clipject-add-form textarea {
-      background: #2c2c2e;
-      border-color: #38383a;
-      color: #e5e5ea;
-    }
-
-    .dark .clipject-add-form textarea:focus {
-      border-color: #33a89e;
-      box-shadow: 0 0 0 2px rgba(51, 168, 158, 0.25);
-    }
-
-    .dark .clipject-add-form input[type="text"] {
-      background: #2c2c2e;
-      border-color: #38383a;
-      color: #e5e5ea;
-    }
-
-    .dark .clipject-add-form input[type="text"]:focus {
-      border-color: #33a89e;
-      box-shadow: 0 0 0 2px rgba(51, 168, 158, 0.25);
-    }
-
-    .dark .clipject-scope-toggle {
-      border-color: #38383a;
-    }
-
-    .dark .clipject-scope-btn {
-      background: #1c1c1e;
-      color: #8e8e93;
-    }
-
-    .dark .clipject-scope-btn.active {
-      background: #33a89e;
-      color: #fff;
+    .clipject-list::-webkit-scrollbar-thumb:hover {
+      background: var(--cj-muted-fg);
     }
   `;
 }

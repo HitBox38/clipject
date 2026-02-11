@@ -7,6 +7,7 @@ interface Props {
   highlightedIndex: number;
   onSelect: (item: SnippetItemData) => void;
   onHighlight: (index: number) => void;
+  emptyText: string;
 }
 
 /**
@@ -19,15 +20,12 @@ export function SnippetList({
   highlightedIndex,
   onSelect,
   onHighlight,
+  emptyText,
 }: Props) {
   const allItems = [...perInputItems, ...globalItems];
 
   if (allItems.length === 0) {
-    return (
-      <div className="clipject-empty">
-        No snippets yet. Save one below.
-      </div>
-    );
+    return <div className="clipject-empty">{emptyText}</div>;
   }
 
   const showSections =

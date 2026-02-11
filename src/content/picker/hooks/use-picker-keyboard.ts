@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { SnippetItemData } from "../types";
 
 interface UsePickerKeyboardOptions {
@@ -12,6 +12,9 @@ interface UsePickerKeyboardOptions {
  *  - ArrowDown / ArrowUp to move highlight
  *  - Enter to select
  *  - Escape to close
+ *
+ * Automatically resets the highlight when the items array changes
+ * (e.g. after a search filter).
  */
 export function usePickerKeyboard({
   items,
@@ -20,43 +23,68 @@ export function usePickerKeyboard({
 }: UsePickerKeyboardOptions) {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev < items.length - 1 ? prev + 1 : 0,
-          );
-          break;
+  // Keep a stable ref of items so the keydown handler always
+  // sees the latest list without needing to re-attach the listener.
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
-        case "ArrowUp":
-          e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : items.length - 1,
-          );
-          break;
+  const highlightRef = useRef(highlightedIndex);
+  highlightRef.current = highlightedIndex;
 
-        case "Enter":
-          e.preventDefault();
-          if (highlightedIndex >= 0 && highlightedIndex < items.length) {
-            onSelect(items[highlightedIndex]);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Reset highlight when items change (search filter, data reload, etc.)
+  const prevLenRef = useRef(items.length);
+  useEffect(() => {
+    if (items.length !== prevLenRef.current) {
+      setHighlightedIndex(items.length > 0 ? 0 : -1);
+      prevLenRef.current = items.length;
+    }
+  }, [items.length]);
+
+  // A stable handler that reads everything from refs.
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const currentItems = itemsRef.current;
+    const len = currentItems.length;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev < len - 1 ? prev + 1 : 0));
+        break;
+
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : len - 1));
+        break;
+
+      case "Enter":
+        e.preventDefault();
+        {
+          const idx = highlightRef.current;
+          if (idx >= 0 && idx < len) {
+            onSelectRef.current(currentItems[idx]);
           }
-          break;
+        }
+        break;
 
-        case "Escape":
-          e.preventDefault();
-          onClose();
-          break;
-      }
-    },
-    [items, highlightedIndex, onSelect, onClose],
-  );
+      case "Escape":
+        e.preventDefault();
+        onCloseRef.current();
+        break;
+    }
+  }, []);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown, { capture: true });
     return () =>
-      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown, {
+        capture: true,
+      });
   }, [handleKeyDown]);
 
   return { highlightedIndex, setHighlightedIndex };

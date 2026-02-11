@@ -7,7 +7,9 @@ interface Props {
 
 /**
  * Inline form for creating a new snippet.
- * The user can type text, add an optional label, and choose scope.
+ * Uses shadcn-matched input/textarea/button primitives.
+ * Clicking inside the form allows focus (stopPropagation prevents
+ * the picker's blanket preventDefault from blocking it).
  */
 export function AddSnippetForm({ onSave, onCancel }: Props) {
   const [value, setValue] = useState("");
@@ -21,68 +23,81 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
   }, [value, label, scope, onSave]);
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      className="clipject-add-form"
+      className="clipject-form"
+      onMouseDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
           handleSubmit();
         }
-        // Stop Escape from bubbling to the picker-level handler
-        // while the form is focused.
         if (e.key === "Escape") {
           e.stopPropagation();
           onCancel();
         }
       }}
     >
-      <textarea
-        placeholder="Snippet text..."
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        autoFocus
-      />
+      {/* Snippet text */}
+      <div className="cj-field">
+        <label className="cj-label">Snippet text</label>
+        <textarea
+          className="cj-textarea"
+          placeholder="Type or paste text…"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          autoFocus
+        />
+      </div>
 
-      <input
-        type="text"
-        placeholder="Label (optional)"
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-      />
+      {/* Optional label */}
+      <div className="cj-field">
+        <label className="cj-label">Label (optional)</label>
+        <input
+          type="text"
+          className="cj-input"
+          placeholder="e.g. greeting, disclaimer…"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+      </div>
 
-      <div className="clipject-add-row">
-        <div className="clipject-scope-toggle">
+      {/* Scope toggle + save / cancel */}
+      <div className="clipject-form-row">
+        <div className="clipject-scope">
           <button
             type="button"
-            className={`clipject-scope-btn${scope === "input" ? " active" : ""}`}
+            className={`cj-btn cj-btn--xs ${scope === "input" ? "cj-btn--default" : "cj-btn--outline"}`}
             onClick={() => setScope("input")}
           >
             This field
           </button>
           <button
             type="button"
-            className={`clipject-scope-btn${scope === "global" ? " active" : ""}`}
+            className={`cj-btn cj-btn--xs ${scope === "global" ? "cj-btn--default" : "cj-btn--outline"}`}
             onClick={() => setScope("global")}
           >
             Global
           </button>
         </div>
 
-        <button
-          type="button"
-          className="clipject-footer-btn primary"
-          onClick={handleSubmit}
-          disabled={!value.trim()}
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          className="clipject-footer-btn"
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
+        <div className="clipject-form-actions">
+          <button
+            type="button"
+            className="cj-btn cj-btn--ghost cj-btn--xs"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="cj-btn cj-btn--default cj-btn--xs"
+            onClick={handleSubmit}
+            disabled={!value.trim()}
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );

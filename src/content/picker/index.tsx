@@ -1,11 +1,15 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PickerProps, SnippetItemData } from "./types";
 import { usePickerPosition } from "./hooks/use-picker-position";
 import { useSnippets } from "./hooks/use-snippets";
 import { usePickerKeyboard } from "./hooks/use-picker-keyboard";
+import { usePickerSearch } from "./hooks/use-picker-search";
+import { usePickerResize } from "./hooks/use-picker-resize";
 import { SnippetList } from "./components/snippet-list";
 import { PickerFooter } from "./components/picker-footer";
 import { AddSnippetForm } from "./components/add-snippet-form";
+import { SearchInput } from "./components/search-input";
+import { ResizeHandle } from "./components/resize-handle";
 import { setNativeValue } from "@/lib/paste";
 import {
   createSnippet,
@@ -23,11 +27,9 @@ export function Picker({
   const [isAdding, setIsAdding] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Load snippets and keep them in sync.
   const { perInputSnippets, globalSnippets, reload } =
     useSnippets(compositeKey);
 
-  // Combine into a flat list for keyboard navigation.
   const perInputItems: SnippetItemData[] = useMemo(
     () =>
       perInputSnippets.map((s) => ({ snippet: s, scope: "input" as const })),
@@ -40,15 +42,17 @@ export function Picker({
     [globalSnippets],
   );
 
-  const allItems = useMemo(
-    () => [...perInputItems, ...globalItems],
-    [perInputItems, globalItems],
+  const { query, setQuery, filteredPerInput, filteredGlobal } =
+    usePickerSearch(perInputItems, globalItems);
+
+  const filteredAll = useMemo(
+    () => [...filteredPerInput, ...filteredGlobal],
+    [filteredPerInput, filteredGlobal],
   );
 
-  // Position the picker near the focused input.
   const position = usePickerPosition(inputEl, onClose);
+  const { maxHeight, onResizeStart } = usePickerResize();
 
-  // Select a snippet: paste its value and close.
   const handleSelect = useCallback(
     (item: SnippetItemData) => {
       setNativeValue(inputEl, item.snippet.value);
@@ -58,34 +62,33 @@ export function Picker({
     [inputEl, onClose],
   );
 
-  // Keyboard navigation.
   const { highlightedIndex, setHighlightedIndex } = usePickerKeyboard({
-    items: allItems,
+    items: filteredAll,
     onSelect: handleSelect,
     onClose,
   });
 
-  // "Save current value" — grabs whatever is currently in the input.
+  useEffect(() => {
+    setHighlightedIndex(filteredAll.length > 0 ? 0 : -1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
   const handleSaveCurrentValue = useCallback(async () => {
     const currentValue = inputEl.value.trim();
     if (!currentValue) return;
-
     const snippet = createSnippet(currentValue);
     await saveInputSnippet(compositeKey, pageMeta, inputMeta, snippet);
     await reload();
   }, [inputEl, compositeKey, pageMeta, inputMeta, reload]);
 
-  // "Add new" form submission.
   const handleAddNew = useCallback(
     async (value: string, label: string, scope: "input" | "global") => {
       const snippet = createSnippet(value, label || undefined);
-
       if (scope === "global") {
         await saveGlobalSnippet(snippet);
       } else {
         await saveInputSnippet(compositeKey, pageMeta, inputMeta, snippet);
       }
-
       setIsAdding(false);
       await reload();
     },
@@ -98,32 +101,42 @@ export function Picker({
     <div
       ref={pickerRef}
       className="clipject-picker"
-      style={{ top: position.top, left: position.left }}
-      onMouseDown={(e) => {
-        // Prevent the picker from stealing focus from the input.
-        e.preventDefault();
-      }}
+      style={{ top: position.top, left: position.left, maxHeight }}
+      onMouseDown={(e) => e.preventDefault()}
     >
-      <div className="clipject-picker-header">
-        <span>ClipJect</span>
+      {/* ---- Header ---- */}
+      <div className="clipject-header">
+        <span className="clipject-title">ClipJect</span>
         <button
           type="button"
-          className="clipject-close-btn"
+          className="cj-btn cj-btn--ghost cj-btn--icon-xs"
           onClick={onClose}
         >
-          &times;
+          <CloseIcon />
         </button>
       </div>
 
+      <div className="cj-separator" />
+
+      {/* ---- Browse mode ---- */}
       {!isAdding && (
         <>
+          <SearchInput value={query} onChange={setQuery} />
+
           <SnippetList
-            perInputItems={perInputItems}
-            globalItems={globalItems}
+            perInputItems={filteredPerInput}
+            globalItems={filteredGlobal}
             highlightedIndex={highlightedIndex}
             onSelect={handleSelect}
             onHighlight={setHighlightedIndex}
+            emptyText={
+              query
+                ? "No matching snippets"
+                : "No snippets yet. Add one below."
+            }
           />
+
+          <div className="cj-separator" />
 
           <PickerFooter
             onSaveCurrentValue={handleSaveCurrentValue}
@@ -133,12 +146,31 @@ export function Picker({
         </>
       )}
 
+      {/* ---- Add mode ---- */}
       {isAdding && (
         <AddSnippetForm
           onSave={handleAddNew}
           onCancel={() => setIsAdding(false)}
         />
       )}
+
+      <ResizeHandle onMouseDown={onResizeStart} />
     </div>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
   );
 }

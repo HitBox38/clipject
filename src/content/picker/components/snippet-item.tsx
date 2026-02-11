@@ -7,6 +7,13 @@ interface Props {
   onMouseEnter: () => void;
 }
 
+/**
+ * A single snippet entry in the picker list.
+ *
+ * Uses a stacked layout matching the options page snippet rows:
+ *   • Label (font-medium)  — only shown when a label exists
+ *   • Value (muted)        — always shown, truncated
+ */
 export function SnippetItem({
   item,
   highlighted,
@@ -16,8 +23,8 @@ export function SnippetItem({
   const { snippet } = item;
   const displayLabel = snippet.label || undefined;
   const displayValue =
-    snippet.value.length > 60
-      ? `${snippet.value.slice(0, 60)}...`
+    snippet.value.length > 80
+      ? `${snippet.value.slice(0, 80)}…`
       : snippet.value;
 
   return (

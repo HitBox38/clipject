@@ -55,13 +55,26 @@ export function PopupApp() {
     });
     if (!tab?.id) return;
 
+    const tabId = tab.id;
     const message: StartElementSelectionMessage = {
       type: "CLIPJECT_START_ELEMENT_SELECTION",
     };
-    await ext.tabs.sendMessage(tab.id, message);
 
-    // Close popup so the user can interact with the page.
-    window.close();
+    if (await trySendMessage(tabId, message)) {
+      window.close();
+      return;
+    }
+
+    // Content script not reachable — inject it programmatically, then retry.
+    const injected = await injectContentScript(tabId);
+    if (injected && (await trySendMessage(tabId, message))) {
+      window.close();
+      return;
+    }
+
+    // If we still can't reach the content script the tab is probably a
+    // restricted page (chrome://, about:, Web Store, etc.).
+    console.warn("[ClipJect] Cannot reach content script on this tab.");
   }, []);
 
   const handleOpenOptions = useCallback(() => {
@@ -138,6 +151,54 @@ export function PopupApp() {
       </div>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Helpers: content-script injection fallback
+// ---------------------------------------------------------------------------
+
+/**
+ * Attempt to send a message to the content script in a given tab.
+ * Returns `true` on success, `false` if the receiving end doesn't exist.
+ */
+async function trySendMessage(
+  tabId: number,
+  message: StartElementSelectionMessage,
+): Promise<boolean> {
+  try {
+    await ext.tabs.sendMessage(tabId, message);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Programmatically inject the content script into a tab that doesn't have
+ * it yet (e.g. tabs opened before the extension was installed, or after an
+ * HMR reload during development).
+ *
+ * Reads the file list from the manifest so it stays in sync with whatever
+ * `@crxjs/vite-plugin` outputs.
+ */
+async function injectContentScript(tabId: number): Promise<boolean> {
+  try {
+    const manifest = ext.runtime.getManifest();
+    const files = manifest.content_scripts?.[0]?.js ?? [];
+    if (files.length === 0) return false;
+
+    await ext.scripting.executeScript({
+      target: { tabId },
+      files,
+    });
+
+    // Give the freshly-injected script a moment to initialise its listeners.
+    await new Promise<void>((r) => setTimeout(r, 150));
+    return true;
+  } catch (e) {
+    console.warn("[ClipJect] Content script injection failed:", e);
+    return false;
+  }
 }
 
 /** Minimal crosshair icon (no dependency on lucide-react). */
