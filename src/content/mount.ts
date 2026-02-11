@@ -437,7 +437,7 @@ function getPickerCSS(): string {
     ================================================================== */
 
     .clipject-search {
-      padding: 0 8px 8px;
+      padding: 8px;
       flex-shrink: 0;
     }
 

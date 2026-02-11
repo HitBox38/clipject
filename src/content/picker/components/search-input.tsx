@@ -13,7 +13,6 @@ interface Props {
  */
 export function SearchInput({ value, onChange }: Props) {
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className="clipject-search"
       onMouseDown={(e) => e.stopPropagation()}
