@@ -9,8 +9,8 @@ import {
 } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useThemeInit } from "@/components/theme-switcher";
 import type { StartElementSelectionMessage } from "@/types/messages";
+import { useThemeInit } from "@/components/theme-switcher/hooks/use-theme-init";
 
 export function PopupApp() {
   useThemeInit();

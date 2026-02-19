@@ -5,7 +5,7 @@ import { PerInputSnippetsPage } from "./per-input-snippets";
 import { SettingsPage } from "./settings";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useThemeInit } from "@/components/theme-switcher";
+import { useThemeInit } from "@/components/theme-switcher/hooks/use-theme-init";
 
 type Tab = "global" | "per-input" | "settings";
 
