@@ -25,7 +25,7 @@ const BANNER_HEIGHT = "40px";
 // Public API
 // ---------------------------------------------------------------------------
 
-export function startElementSelector(): void {
+export const startElementSelector = (): void => {
   if (active) return;
   active = true;
 
@@ -36,7 +36,7 @@ export function startElementSelector(): void {
   document.addEventListener("keydown", handleKeyDown, { capture: true });
 }
 
-export function stopElementSelector(): void {
+export const stopElementSelector = (): void => {
   if (!active) return;
   active = false;
 
@@ -48,7 +48,7 @@ export function stopElementSelector(): void {
   document.removeEventListener("keydown", handleKeyDown, { capture: true });
 }
 
-export function isElementSelectorActive(): boolean {
+export const isElementSelectorActive = (): boolean => {
   return active;
 }
 
@@ -56,7 +56,7 @@ export function isElementSelectorActive(): boolean {
 // Banner
 // ---------------------------------------------------------------------------
 
-function createBanner(): void {
+const createBanner = (): void => {
   banner = document.createElement("div");
   banner.id = "clipject-selector-banner";
 
@@ -107,7 +107,7 @@ function createBanner(): void {
   document.body.appendChild(banner);
 }
 
-function removeBanner(): void {
+const removeBanner = (): void => {
   if (banner) {
     banner.remove();
     banner = null;
@@ -118,7 +118,7 @@ function removeBanner(): void {
 // Highlight helpers
 // ---------------------------------------------------------------------------
 
-function highlightElement(el: HTMLElement): void {
+const highlightElement = (el: HTMLElement): void => {
   if (currentHighlight === el) return;
   clearHighlight();
   currentHighlight = el;
@@ -128,7 +128,7 @@ function highlightElement(el: HTMLElement): void {
   el.style.outlineOffset = HIGHLIGHT_OUTLINE_OFFSET;
 }
 
-function clearHighlight(): void {
+const clearHighlight = (): void => {
   if (!currentHighlight) return;
   currentHighlight.style.outline =
     currentHighlight.dataset.clipjectPrevOutline ?? "";
@@ -140,7 +140,7 @@ function clearHighlight(): void {
 }
 
 /** Brief green flash to confirm the input was registered. */
-function flashConfirmation(el: HTMLElement): void {
+const flashConfirmation = (el: HTMLElement): void => {
   const prevBg = el.style.background;
   el.style.background = FLASH_BG;
   setTimeout(() => {
@@ -152,7 +152,7 @@ function flashConfirmation(el: HTMLElement): void {
 // Event handlers
 // ---------------------------------------------------------------------------
 
-function handleMouseOver(event: MouseEvent): void {
+const handleMouseOver = (event: MouseEvent): void => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
   if (!isSupportedField(target)) return;
@@ -160,14 +160,14 @@ function handleMouseOver(event: MouseEvent): void {
   highlightElement(target);
 }
 
-function handleMouseOut(event: MouseEvent): void {
+const handleMouseOut = (event: MouseEvent): void => {
   const target = event.target;
   if (target === currentHighlight) {
     clearHighlight();
   }
 }
 
-function handleClick(event: MouseEvent): void {
+const handleClick = (event: MouseEvent): void => {
   // Prevent normal click behavior while in selection mode.
   event.preventDefault();
   event.stopPropagation();
@@ -184,7 +184,7 @@ function handleClick(event: MouseEvent): void {
   void registerInput(target as HTMLInputElement | HTMLTextAreaElement);
 }
 
-function handleKeyDown(event: KeyboardEvent): void {
+const handleKeyDown = (event: KeyboardEvent): void => {
   if (event.key === "Escape") {
     event.preventDefault();
     event.stopPropagation();
@@ -196,9 +196,9 @@ function handleKeyDown(event: KeyboardEvent): void {
 // Registration
 // ---------------------------------------------------------------------------
 
-async function registerInput(
+const registerInput = async (
   el: HTMLInputElement | HTMLTextAreaElement,
-): Promise<void> {
+): Promise<void> => {
   const origin = window.location.origin;
   const pathname = window.location.pathname;
   const inputSignature = computeInputSignature(el);

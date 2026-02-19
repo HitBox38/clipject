@@ -24,13 +24,13 @@ let shadowRoot: ShadowRoot | null = null;
 let reactRoot: Root | null = null;
 let cleanupTheme: (() => void) | null = null;
 
-function injectStyles(shadow: ShadowRoot): void {
+const injectStyles = (shadow: ShadowRoot): void => {
   const style = document.createElement("style");
   style.textContent = getPickerCSS();
   shadow.appendChild(style);
 }
 
-function ensureHost(): { shadow: ShadowRoot; container: HTMLDivElement } {
+const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
   if (shadowHost && shadowRoot) {
     const container = shadowRoot.querySelector(
       "#clipject-root",
@@ -65,7 +65,7 @@ function ensureHost(): { shadow: ShadowRoot; container: HTMLDivElement } {
   return { shadow: shadowRoot, container };
 }
 
-export function mountPicker(props: PickerProps): void {
+export const mountPicker = (props: PickerProps): void => {
   const { container } = ensureHost();
 
   if (reactRoot) {
@@ -77,7 +77,7 @@ export function mountPicker(props: PickerProps): void {
   reactRoot.render(createElement(Picker, props));
 }
 
-export function unmountPicker(): void {
+export const unmountPicker = (): void => {
   if (reactRoot) {
     reactRoot.unmount();
     reactRoot = null;
@@ -109,7 +109,7 @@ export function unmountPicker(): void {
 //   5. Picker layout (header, search, list, items, footer, form, resize)
 // ---------------------------------------------------------------------------
 
-function getPickerCSS(): string {
+const getPickerCSS = (): string => {
   return /* css */ `
 
     /* ==================================================================

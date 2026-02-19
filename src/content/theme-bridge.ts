@@ -16,17 +16,17 @@ import type { Theme } from "@/types/storage";
 
 const PREFERS_DARK_MQ = "(prefers-color-scheme: dark)";
 
-function getSystemPreference(): boolean {
+const getSystemPreference = (): boolean => {
   return window.matchMedia(PREFERS_DARK_MQ).matches;
 }
 
-function resolve(theme: Theme): boolean {
+const resolve = (theme: Theme): boolean => {
   if (theme === "dark") return true;
   if (theme === "light") return false;
   return getSystemPreference();
 }
 
-function apply(container: HTMLElement, isDark: boolean): void {
+const apply = (container: HTMLElement, isDark: boolean): void => {
   container.classList.toggle("dark", isDark);
 }
 
@@ -34,7 +34,7 @@ function apply(container: HTMLElement, isDark: boolean): void {
  * Attaches theme tracking to a shadow DOM container element.
  * Returns a cleanup function that removes all listeners.
  */
-export function initPickerTheme(container: HTMLElement): () => void {
+export const initPickerTheme = (container: HTMLElement): () => void => {
   let currentTheme: Theme = "system";
 
   // 1. Read persisted value

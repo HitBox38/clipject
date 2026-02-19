@@ -49,11 +49,11 @@ let trackedFingerprints = new Set<string>();
 // Tracked fingerprints cache
 // ---------------------------------------------------------------------------
 
-async function refreshTrackedFingerprints(): Promise<void> {
+const refreshTrackedFingerprints = async (): Promise<void> => {
   trackedFingerprints = await buildTrackedFingerprintSet();
 }
 
-function isInputTracked(el: SupportedElement): boolean {
+const isInputTracked = (el: SupportedElement): boolean => {
   const origin = window.location.origin;
   const pathname = window.location.pathname;
   const signature = computeInputSignature(el);
@@ -65,7 +65,7 @@ function isInputTracked(el: SupportedElement): boolean {
 // Focus handlers
 // ---------------------------------------------------------------------------
 
-function handleFocusIn(event: FocusEvent): void {
+const handleFocusIn = (event: FocusEvent): void => {
   // Don't open picker while the element-selection overlay is active.
   if (isElementSelectorActive()) return;
 
@@ -81,7 +81,7 @@ function handleFocusIn(event: FocusEvent): void {
   }, FOCUS_DEBOUNCE_MS);
 }
 
-function handleFocusOut(event: FocusEvent): void {
+const handleFocusOut = (event: FocusEvent): void => {
   const next = event.relatedTarget as Node | null;
 
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -98,7 +98,7 @@ function handleFocusOut(event: FocusEvent): void {
   }, FOCUS_DEBOUNCE_MS);
 }
 
-function handleClickOutside(event: MouseEvent): void {
+const handleClickOutside = (event: MouseEvent): void => {
   const target = event.target as Node;
 
   // Clicks inside our shadow host are fine.
@@ -115,7 +115,7 @@ function handleClickOutside(event: MouseEvent): void {
 // Picker lifecycle
 // ---------------------------------------------------------------------------
 
-async function openPickerFor(el: SupportedElement): Promise<void> {
+const openPickerFor = async (el: SupportedElement): Promise<void> => {
   if (!extensionEnabled) return;
 
   // Only open the picker for inputs that are tracked.
@@ -137,7 +137,7 @@ async function openPickerFor(el: SupportedElement): Promise<void> {
   });
 }
 
-function closePicker(): void {
+const closePicker = (): void => {
   activeEl = null;
   unmountPicker();
 }
@@ -146,12 +146,12 @@ function closePicker(): void {
 // SPA navigation watchers
 // ---------------------------------------------------------------------------
 
-function onSpaNavigation(): void {
+const onSpaNavigation = (): void => {
   // Page context changed — close the picker so stale keys aren't used.
   closePicker();
 }
 
-function watchTitleChanges(): MutationObserver {
+const watchTitleChanges = (): MutationObserver => {
   const titleEl = document.querySelector("title");
   const observer = new MutationObserver(onSpaNavigation);
 
@@ -179,7 +179,7 @@ function watchTitleChanges(): MutationObserver {
 // Storage-change listeners
 // ---------------------------------------------------------------------------
 
-function watchStorageChanges(): void {
+const watchStorageChanges = (): void => {
   ext.storage.onChanged.addListener((changes) => {
     // Enabled flag.
     if (STORAGE_KEY_ENABLED in changes) {
@@ -204,7 +204,7 @@ function watchStorageChanges(): void {
 // Message listener (popup -> content)
 // ---------------------------------------------------------------------------
 
-function watchMessages(): void {
+const watchMessages = (): void => {
   ext.runtime.onMessage.addListener(
     (message: ClipjectMessage, _sender, sendResponse) => {
       if (message.type === "CLIPJECT_START_ELEMENT_SELECTION") {
@@ -221,7 +221,7 @@ function watchMessages(): void {
 // Public init
 // ---------------------------------------------------------------------------
 
-export function initObserver(): void {
+export const initObserver = (): void => {
   // Hydrate the enabled flag and tracked-fingerprint cache.
   void getEnabled().then((v) => {
     extensionEnabled = v;
