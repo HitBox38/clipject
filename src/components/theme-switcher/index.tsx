@@ -15,7 +15,7 @@ const ICONS: Record<Theme, typeof SunIcon> = {
   dark: MoonIcon,
 };
 
-export function ThemeSwitcher() {
+export const ThemeSwitcher = () => {
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
 
@@ -54,5 +54,3 @@ export function ThemeSwitcher() {
   );
 }
 
-export { useThemeStore } from "./hooks/use-theme-store";
-export { useThemeInit } from "./hooks/use-theme-init";

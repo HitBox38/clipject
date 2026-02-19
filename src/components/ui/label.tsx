@@ -2,8 +2,10 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Label({ className, ...props }: React.ComponentProps<"label">) {
+/** Pass htmlFor with the id of the control when associating this label with an input. */
+const Label = ({ className, ...props }: React.ComponentProps<"label">) => {
   return (
+    // eslint-disable-next-line jsx-a11y/label-has-associated-control -- Generic label; parent must pass htmlFor.
     <label
       data-slot="label"
       className={cn(
