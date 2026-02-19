@@ -5,7 +5,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export function AddSnippetForm({ onSave, onCancel }: Props) {
+export const AddSnippetForm = ({ onSave, onCancel }: Props) => {
   const [value, setValue] = useState("");
   const [label, setLabel] = useState("");
   const [scope, setScope] = useState<"input" | "global">("input");
@@ -36,19 +36,24 @@ export function AddSnippetForm({ onSave, onCancel }: Props) {
       }}
     >
       <div className="cj-field">
-        <label className="cj-label">Snippet text</label>
+        <label htmlFor="clipject-snippet-text" className="cj-label">
+          Snippet text
+        </label>
         <textarea
+          id="clipject-snippet-text"
           className="cj-textarea"
           placeholder="Type or paste text…"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          autoFocus
         />
       </div>
 
       <div className="cj-field">
-        <label className="cj-label">Label (optional)</label>
+        <label htmlFor="clipject-snippet-label" className="cj-label">
+          Label (optional)
+        </label>
         <input
+          id="clipject-snippet-label"
           type="text"
           className="cj-input"
           placeholder="e.g. greeting, disclaimer…"

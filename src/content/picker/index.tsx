@@ -17,13 +17,13 @@ import {
   saveInputSnippet,
 } from "@/lib/storage";
 
-export function Picker({
+export const Picker = ({
   inputEl,
   compositeKey,
   pageMeta,
   inputMeta,
   onClose,
-}: PickerProps) {
+}: PickerProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +99,9 @@ export function Picker({
   return (
     <div
       ref={pickerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="ClipJect snippet picker"
       className="clipject-picker"
       style={{ top: position.top, left: position.left, maxHeight }}
       onMouseDown={(e) => e.preventDefault()}
@@ -158,7 +161,7 @@ export function Picker({
   );
 }
 
-function CloseIcon() {
+const CloseIcon = () => {
   return (
     <svg
       viewBox="0 0 24 24"

@@ -14,14 +14,14 @@ interface Props {
  * Renders the combined list: per-input snippets first, then globals.
  * Section labels are shown when both categories have items.
  */
-export function SnippetList({
+export const SnippetList = ({
   perInputItems,
   globalItems,
   highlightedIndex,
   onSelect,
   onHighlight,
   emptyText,
-}: Props) {
+}: Props) => {
   const allItems = [...perInputItems, ...globalItems];
 
   if (allItems.length === 0) {

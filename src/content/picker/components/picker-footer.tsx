@@ -7,11 +7,11 @@ interface Props {
 /**
  * Footer bar with shadcn-styled action buttons.
  */
-export function PickerFooter({
+export const PickerFooter = ({
   onSaveCurrentValue,
   onAddNew,
   hasCurrentValue,
-}: Props) {
+}: Props) => {
   return (
     <div className="clipject-footer">
       {hasCurrentValue && (

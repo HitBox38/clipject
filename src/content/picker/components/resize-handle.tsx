@@ -6,7 +6,7 @@ interface Props {
  * Thin drag-handle at the bottom of the picker.
  * Renders a subtle grip indicator that becomes more visible on hover.
  */
-export function ResizeHandle({ onMouseDown }: Props) {
+export const ResizeHandle = ({ onMouseDown }: Props) => {
   return (
     <div
       className="clipject-resize-handle"

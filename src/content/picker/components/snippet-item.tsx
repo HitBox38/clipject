@@ -14,12 +14,12 @@ interface Props {
  *   • Label (font-medium)  — only shown when a label exists
  *   • Value (muted)        — always shown, truncated
  */
-export function SnippetItem({
+export const SnippetItem = ({
   item,
   highlighted,
   onClick,
   onMouseEnter,
-}: Props) {
+}: Props) => {
   const { snippet } = item;
   const displayLabel = snippet.label || undefined;
   const displayValue =

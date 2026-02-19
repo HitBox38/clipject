@@ -11,9 +11,10 @@ interface Props {
  * receives focus without triggering the picker's blanket
  * `preventDefault()` handler.
  */
-export function SearchInput({ value, onChange }: Props) {
+export const SearchInput = ({ value, onChange }: Props) => {
   return (
     <div
+      role="search"
       className="clipject-search"
       onMouseDown={(e) => e.stopPropagation()}
     >
