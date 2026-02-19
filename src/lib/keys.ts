@@ -14,7 +14,7 @@ export interface PageKeyResult {
  * Compute a unique page key from origin + pathname + title.
  * Format: `${origin}${pathname}::${title}`
  */
-export function computePageKey(): PageKeyResult {
+export const computePageKey = (): PageKeyResult => {
   const origin = window.location.origin;
   const pathname = window.location.pathname;
   const title = document.title;
@@ -35,7 +35,7 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
  * Build a CSS-selector-like DOM path for an element.
  * Uses `nth-of-type` when siblings share the same tag.
  */
-function getDomPath(el: Element): string {
+const getDomPath = (el: Element): string => {
   const parts: string[] = [];
   let current: Element | null = el;
 
@@ -76,7 +76,7 @@ function getDomPath(el: Element): string {
  *
  * The result is prefixed with the strategy so callers can reason about stability.
  */
-export function computeInputSignature(el: SupportedElement): string {
+export const computeInputSignature = (el: SupportedElement): string => {
   if (el.id) return `id:${el.id}`;
   if (el.name) return `name:${el.name}`;
 
@@ -91,10 +91,10 @@ export function computeInputSignature(el: SupportedElement): string {
 /**
  * Build the full composite storage key for a specific input on a specific page.
  */
-export function buildCompositeKey(
+export const buildCompositeKey = (
   pageKey: string,
   inputSignature: string,
-): string {
+): string => {
   return `${pageKey}${KEY_PAGE_TITLE_SEP}${inputSignature}`;
 }
 
@@ -106,18 +106,18 @@ export function buildCompositeKey(
  *
  * Format: `${origin}${pathname}::${inputSignature}`
  */
-export function buildTrackingFingerprint(
+export const buildTrackingFingerprint = (
   origin: string,
   pathname: string,
   inputSignature: string,
-): string {
+): string => {
   return `${origin}${pathname}${KEY_PAGE_TITLE_SEP}${inputSignature}`;
 }
 
 /**
  * Build InputMeta from an element.
  */
-export function buildInputMeta(el: SupportedElement): InputMeta {
+export const buildInputMeta = (el: SupportedElement): InputMeta => {
   const tag = el.tagName.toLowerCase() as "input" | "textarea";
   const meta: InputMeta = {
     signature: computeInputSignature(el),
@@ -135,7 +135,7 @@ export function buildInputMeta(el: SupportedElement): InputMeta {
 /**
  * Returns `true` when the element is a password field we should skip.
  */
-export function isPasswordField(el: Element): boolean {
+export const isPasswordField = (el: Element): boolean => {
   return (
     el instanceof HTMLInputElement &&
     el.type === "password"
@@ -145,7 +145,7 @@ export function isPasswordField(el: Element): boolean {
 /**
  * Returns `true` when the element is a supported input or textarea.
  */
-export function isSupportedField(el: Element): el is SupportedElement {
+export const isSupportedField = (el: Element): el is SupportedElement => {
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {
     const unsupported = new Set([

@@ -33,12 +33,12 @@ import { buildTrackingFingerprint } from "./keys";
 // Generic low-level helpers
 // ---------------------------------------------------------------------------
 
-async function getKey<T>(key: string, fallback: T): Promise<T> {
+const getKey = async <T>(key: string, fallback: T): Promise<T> => {
   const result = await ext.storage.local.get(key);
   return (result[key] as T) ?? fallback;
 }
 
-async function setKey<T>(key: string, value: T): Promise<void> {
+const setKey = async <T>(key: string, value: T): Promise<void> => {
   await ext.storage.local.set({ [key]: value });
 }
 
@@ -46,23 +46,23 @@ async function setKey<T>(key: string, value: T): Promise<void> {
 // Per-input database
 // ---------------------------------------------------------------------------
 
-export async function getPerInputDb(): Promise<PerInputDb> {
+export const getPerInputDb = async (): Promise<PerInputDb> => {
   return getKey<PerInputDb>(STORAGE_KEY_PER_INPUT_DB, {});
 }
 
-export async function getInputEntry(
+export const getInputEntry = async (
   compositeKey: string,
-): Promise<InputEntry | null> {
+): Promise<InputEntry | null> => {
   const db = await getPerInputDb();
   return db[compositeKey] ?? null;
 }
 
-export async function saveInputSnippet(
+export const saveInputSnippet = async (
   compositeKey: string,
   page: PageMeta,
   input: InputMeta,
   snippet: Snippet,
-): Promise<void> {
+): Promise<void> => {
   const db = await getPerInputDb();
 
   const existing = db[compositeKey];
@@ -77,10 +77,10 @@ export async function saveInputSnippet(
   await setKey(STORAGE_KEY_PER_INPUT_DB, db);
 }
 
-export async function deleteInputSnippet(
+export const deleteInputSnippet = async (
   compositeKey: string,
   snippetId: string,
-): Promise<void> {
+): Promise<void> => {
   const db = await getPerInputDb();
   const entry = db[compositeKey];
   if (!entry) return;
@@ -95,11 +95,11 @@ export async function deleteInputSnippet(
   await setKey(STORAGE_KEY_PER_INPUT_DB, db);
 }
 
-export async function updateInputSnippet(
+export const updateInputSnippet = async (
   compositeKey: string,
   snippetId: string,
   patch: Partial<Pick<Snippet, "value" | "label">>,
-): Promise<void> {
+): Promise<void> => {
   const db = await getPerInputDb();
   const entry = db[compositeKey];
   if (!entry) return;
@@ -114,7 +114,7 @@ export async function updateInputSnippet(
   await setKey(STORAGE_KEY_PER_INPUT_DB, db);
 }
 
-export async function deleteInputEntry(compositeKey: string): Promise<void> {
+export const deleteInputEntry = async (compositeKey: string): Promise<void> => {
   const db = await getPerInputDb();
   delete db[compositeKey];
   await setKey(STORAGE_KEY_PER_INPUT_DB, db);
@@ -124,19 +124,19 @@ export async function deleteInputEntry(compositeKey: string): Promise<void> {
 // Global snippets
 // ---------------------------------------------------------------------------
 
-export async function getGlobalSnippets(): Promise<GlobalSnippet[]> {
+export const getGlobalSnippets = async (): Promise<GlobalSnippet[]> => {
   return getKey<GlobalSnippet[]>(STORAGE_KEY_GLOBAL_SNIPPETS, []);
 }
 
-export async function saveGlobalSnippet(
+export const saveGlobalSnippet = async (
   snippet: GlobalSnippet,
-): Promise<void> {
+): Promise<void> => {
   const list = await getGlobalSnippets();
   list.push(snippet);
   await setKey(STORAGE_KEY_GLOBAL_SNIPPETS, list);
 }
 
-export async function deleteGlobalSnippet(snippetId: string): Promise<void> {
+export const deleteGlobalSnippet = async (snippetId: string): Promise<void> => {
   const list = await getGlobalSnippets();
   await setKey(
     STORAGE_KEY_GLOBAL_SNIPPETS,
@@ -144,10 +144,10 @@ export async function deleteGlobalSnippet(snippetId: string): Promise<void> {
   );
 }
 
-export async function updateGlobalSnippet(
+export const updateGlobalSnippet = async (
   snippetId: string,
   patch: Partial<Pick<Snippet, "value" | "label">>,
-): Promise<void> {
+): Promise<void> => {
   const list = await getGlobalSnippets();
   const snippet = list.find((s) => s.id === snippetId);
   if (!snippet) return;
@@ -163,11 +163,11 @@ export async function updateGlobalSnippet(
 // Enabled flag
 // ---------------------------------------------------------------------------
 
-export async function getEnabled(): Promise<boolean> {
+export const getEnabled = async (): Promise<boolean> => {
   return getKey<boolean>(STORAGE_KEY_ENABLED, true);
 }
 
-export async function setEnabled(enabled: boolean): Promise<void> {
+export const setEnabled = async (enabled: boolean): Promise<void> => {
   await setKey(STORAGE_KEY_ENABLED, enabled);
 }
 
@@ -175,11 +175,11 @@ export async function setEnabled(enabled: boolean): Promise<void> {
 // Theme preference
 // ---------------------------------------------------------------------------
 
-export async function getTheme(): Promise<Theme> {
+export const getTheme = async (): Promise<Theme> => {
   return getKey<Theme>(STORAGE_KEY_THEME, "system");
 }
 
-export async function setTheme(theme: Theme): Promise<void> {
+export const setTheme = async (theme: Theme): Promise<void> => {
   await setKey(STORAGE_KEY_THEME, theme);
 }
 
@@ -187,13 +187,13 @@ export async function setTheme(theme: Theme): Promise<void> {
 // Tracked inputs
 // ---------------------------------------------------------------------------
 
-export async function getTrackedInputs(): Promise<TrackedInput[]> {
+export const getTrackedInputs = async (): Promise<TrackedInput[]> => {
   return getKey<TrackedInput[]>(STORAGE_KEY_TRACKED_INPUTS, []);
 }
 
-export async function addTrackedInput(
+export const addTrackedInput = async (
   input: TrackedInput,
-): Promise<void> {
+): Promise<void> => {
   const list = await getTrackedInputs();
   const fingerprint = buildTrackingFingerprint(
     input.origin,
@@ -213,9 +213,9 @@ export async function addTrackedInput(
   await setKey(STORAGE_KEY_TRACKED_INPUTS, list);
 }
 
-export async function removeTrackedInput(
+export const removeTrackedInput = async (
   fingerprint: string,
-): Promise<void> {
+): Promise<void> => {
   const list = await getTrackedInputs();
   await setKey(
     STORAGE_KEY_TRACKED_INPUTS,
@@ -235,7 +235,7 @@ export async function removeTrackedInput(
  * This ensures backward compat — any input with saved snippets
  * is automatically treated as tracked.
  */
-export async function buildTrackedFingerprintSet(): Promise<Set<string>> {
+export const buildTrackedFingerprintSet = async (): Promise<Set<string>> => {
   const [tracked, db] = await Promise.all([
     getTrackedInputs(),
     getPerInputDb(),
@@ -266,7 +266,7 @@ export async function buildTrackedFingerprintSet(): Promise<Set<string>> {
 // Bulk operations
 // ---------------------------------------------------------------------------
 
-export async function clearAllData(): Promise<void> {
+export const clearAllData = async (): Promise<void> => {
   await ext.storage.local.remove([
     STORAGE_KEY_PER_INPUT_DB,
     STORAGE_KEY_GLOBAL_SNIPPETS,
@@ -281,7 +281,7 @@ export async function clearAllData(): Promise<void> {
 /**
  * Read all user data and wrap it in a versioned export envelope.
  */
-export async function exportAllData(): Promise<ClipjectExportPayload> {
+export const exportAllData = async (): Promise<ClipjectExportPayload> => {
   const [globalSnippets, perInputDb, trackedInputs] = await Promise.all([
     getGlobalSnippets(),
     getPerInputDb(),
@@ -308,10 +308,10 @@ export async function exportAllData(): Promise<ClipjectExportPayload> {
  *                 "merge" adds incoming data on top of what already exists.
  * @returns Counts of what was imported so the UI can show a summary.
  */
-export async function importAllData(
+export const importAllData = async (
   payload: ClipjectExportPayload,
   strategy: "merge" | "replace",
-): Promise<ImportResult> {
+): Promise<ImportResult> => {
   const { globalSnippets, perInputDb, trackedInputs } = payload.data;
 
   if (strategy === "replace") {
@@ -392,12 +392,12 @@ export async function importAllData(
  *
  * @returns The number of snippets cloned.
  */
-export async function cloneInputEntry(
+export const cloneInputEntry = async (
   sourceKey: string,
   targetOrigin: string,
   targetPathname: string,
   targetInputSignature?: string,
-): Promise<number> {
+): Promise<number> => {
   const db = await getPerInputDb();
   const source = db[sourceKey];
   if (!source) {
@@ -455,10 +455,10 @@ export async function cloneInputEntry(
 // Snippet factory
 // ---------------------------------------------------------------------------
 
-export function createSnippet(
+export const createSnippet = (
   value: string,
   label?: string,
-): Snippet {
+): Snippet => {
   const now = Date.now();
   return {
     id: crypto.randomUUID(),

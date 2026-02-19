@@ -9,7 +9,7 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
  * Set `value` on `el` using the native prototype setter (bypasses React's
  * synthetic value property) then dispatches `input` and `change` events.
  */
-export function setNativeValue(el: SupportedElement, value: string): void {
+export const setNativeValue = (el: SupportedElement, value: string): void => {
   // 1. Locate the native setter on the prototype chain.
   //    React overwrites `.value` on the instance, so we need the original.
   const descriptor =

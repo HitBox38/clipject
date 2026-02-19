@@ -35,29 +35,29 @@ export type DecodeResult =
 // Helpers
 // ---------------------------------------------------------------------------
 
-function isRecord(v: unknown): v is Record<string, unknown> {
+const isRecord = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function isString(v: unknown): v is string {
+const isString = (v: unknown): v is string => {
   return typeof v === "string";
 }
 
-function isNumber(v: unknown): v is number {
+const isNumber = (v: unknown): v is number => {
   return typeof v === "number" && Number.isFinite(v);
 }
 
 /**
  * Standard base64 -> base64url (URL-safe, no padding).
  */
-function toBase64Url(base64: string): string {
+const toBase64Url = (base64: string): string => {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 /**
  * base64url -> standard base64.
  */
-function fromBase64Url(b64url: string): string {
+const fromBase64Url = (b64url: string): string => {
   let b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
   // Re-add padding
   const padLen = (4 - (b64.length % 4)) % 4;
@@ -72,7 +72,7 @@ function fromBase64Url(b64url: string): string {
 /**
  * Build a copy-pasteable share string for a single per-input snippet.
  */
-export function encodeShareString(payload: SharedSnippetPayload): string {
+export const encodeShareString = (payload: SharedSnippetPayload): string => {
   const json = JSON.stringify(payload);
   const base64 = btoa(
     // Handle multi-byte characters (emoji, CJK, etc.)
@@ -87,7 +87,7 @@ export function encodeShareString(payload: SharedSnippetPayload): string {
 // Decode + validate
 // ---------------------------------------------------------------------------
 
-function validateSharedPayload(raw: unknown): string | null {
+const validateSharedPayload = (raw: unknown): string | null => {
   if (!isRecord(raw)) return "Not a JSON object.";
   if (raw.type !== "per-input-snippet") return 'Invalid payload type.';
 
@@ -118,7 +118,7 @@ function validateSharedPayload(raw: unknown): string | null {
 /**
  * Decode and validate a share string.
  */
-export function decodeShareString(str: string): DecodeResult {
+export const decodeShareString = (str: string): DecodeResult => {
   const trimmed = str.trim();
 
   if (!trimmed.startsWith(SHARE_PREFIX)) {
@@ -162,9 +162,9 @@ export function decodeShareString(str: string): DecodeResult {
  * Generates a fresh snippet ID so there are no collisions if the same
  * share string is imported multiple times.
  */
-export async function importSharedSnippet(
+export const importSharedSnippet = async (
   payload: SharedSnippetPayload,
-): Promise<void> {
+): Promise<void> => {
   const { page, input, snippet } = payload;
 
   // Build the composite key the same way the content script does:

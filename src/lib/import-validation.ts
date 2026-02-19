@@ -19,15 +19,15 @@ export type ValidationResult =
 // Helpers
 // ---------------------------------------------------------------------------
 
-function isRecord(v: unknown): v is Record<string, unknown> {
+const isRecord = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function isNumber(v: unknown): v is number {
+const isNumber = (v: unknown): v is number => {
   return typeof v === "number" && Number.isFinite(v);
 }
 
-function isString(v: unknown): v is string {
+const isString = (v: unknown): v is string => {
   return typeof v === "string";
 }
 
@@ -35,7 +35,7 @@ function isString(v: unknown): v is string {
  * Validate a single Snippet-shaped object.
  * Returns an error string or null if valid.
  */
-function validateSnippet(s: unknown, ctx: string): string | null {
+const validateSnippet = (s: unknown, ctx: string): string | null => {
   if (!isRecord(s)) return `${ctx}: not an object`;
   if (!isString(s.id)) return `${ctx}: missing or invalid "id"`;
   if (!isString(s.value)) return `${ctx}: missing or invalid "value"`;
@@ -48,7 +48,7 @@ function validateSnippet(s: unknown, ctx: string): string | null {
   return null;
 }
 
-function validatePageMeta(p: unknown, ctx: string): string | null {
+const validatePageMeta = (p: unknown, ctx: string): string | null => {
   if (!isRecord(p)) return `${ctx}: not an object`;
   if (!isString(p.origin)) return `${ctx}: missing "origin"`;
   if (!isString(p.pathname)) return `${ctx}: missing "pathname"`;
@@ -56,7 +56,7 @@ function validatePageMeta(p: unknown, ctx: string): string | null {
   return null;
 }
 
-function validateInputMeta(m: unknown, ctx: string): string | null {
+const validateInputMeta = (m: unknown, ctx: string): string | null => {
   if (!isRecord(m)) return `${ctx}: not an object`;
   if (!isString(m.signature)) return `${ctx}: missing "signature"`;
   if (m.tag !== "input" && m.tag !== "textarea") {
@@ -69,7 +69,7 @@ function validateInputMeta(m: unknown, ctx: string): string | null {
   return null;
 }
 
-function validateInputEntry(e: unknown, key: string): string | null {
+const validateInputEntry = (e: unknown, key: string): string | null => {
   const ctx = `perInputDb["${key}"]`;
   if (!isRecord(e)) return `${ctx}: not an object`;
 
@@ -91,7 +91,7 @@ function validateInputEntry(e: unknown, key: string): string | null {
   return null;
 }
 
-function validateTrackedInput(t: unknown, idx: number): string | null {
+const validateTrackedInput = (t: unknown, idx: number): string | null => {
   const ctx = `trackedInputs[${idx}]`;
   if (!isRecord(t)) return `${ctx}: not an object`;
   if (!isString(t.origin)) return `${ctx}: missing "origin"`;
@@ -110,7 +110,7 @@ function validateTrackedInput(t: unknown, idx: number): string | null {
  *
  * Call this on the result of `JSON.parse()` before importing.
  */
-export function validateExportPayload(raw: unknown): ValidationResult {
+export const validateExportPayload = (raw: unknown): ValidationResult => {
   if (!isRecord(raw)) {
     return { ok: false, error: "Payload is not a JSON object." };
   }
