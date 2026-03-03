@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useOptionsStore } from "./stores/options-store";
 import { GlobalSnippetsPage } from "./global-snippets";
 import { PerInputSnippetsPage } from "./per-input-snippets";
@@ -15,6 +15,17 @@ const NAV_ITEMS: { id: Tab; label: string }[] = [
   { id: "settings", label: "Settings" },
 ];
 
+function OptionsTabContent({ tab }: { tab: Tab }) {
+  switch (tab) {
+    case "global":
+      return <GlobalSnippetsPage />;
+    case "per-input":
+      return <PerInputSnippetsPage />;
+    case "settings":
+      return <SettingsPage />;
+  }
+}
+
 export function OptionsApp() {
   useThemeInit();
 
@@ -25,17 +36,6 @@ export function OptionsApp() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
-
-  const renderContent = useCallback(() => {
-    switch (tab) {
-      case "global":
-        return <GlobalSnippetsPage />;
-      case "per-input":
-        return <PerInputSnippetsPage />;
-      case "settings":
-        return <SettingsPage />;
-    }
-  }, [tab]);
 
   if (!loaded) {
     return (
@@ -75,7 +75,9 @@ export function OptionsApp() {
           </nav>
 
           {/* Content */}
-          <main className="flex-1 min-w-0">{renderContent()}</main>
+          <main className="flex-1 min-w-0">
+            <OptionsTabContent tab={tab} />
+          </main>
         </div>
       </div>
     </div>

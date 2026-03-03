@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
   useOptionsStore,
   groupEntriesByPage,
 } from "@/options/stores/options-store";
+import { useCloneEntryStore } from "@/options/stores/clone-entry-store";
 
 /**
  * Settings section: clone all snippets from one per-input entry to
@@ -23,9 +24,20 @@ import {
  */
 export function CloneEntrySection() {
   const perInputDb = useOptionsStore((s) => s.perInputDb);
-  const cloneEntry = useOptionsStore((s) => s.cloneEntry);
+  const sourceKey = useCloneEntryStore((s) => s.sourceKey);
+  const targetOrigin = useCloneEntryStore((s) => s.targetOrigin);
+  const targetPathname = useCloneEntryStore((s) => s.targetPathname);
+  const targetInputSig = useCloneEntryStore((s) => s.targetInputSig);
+  const error = useCloneEntryStore((s) => s.error);
+  const success = useCloneEntryStore((s) => s.success);
+  const cloning = useCloneEntryStore((s) => s.cloning);
 
-  // Group entries for the source picker.
+  const setSource = useCloneEntryStore((s) => s.setSource);
+  const setTargetOrigin = useCloneEntryStore((s) => s.setTargetOrigin);
+  const setTargetPathname = useCloneEntryStore((s) => s.setTargetPathname);
+  const setTargetInputSig = useCloneEntryStore((s) => s.setTargetInputSig);
+  const runClone = useCloneEntryStore((s) => s.runClone);
+
   const groups = useMemo(() => {
     const map = groupEntriesByPage(perInputDb);
     return Array.from(map.entries()).map(([pageKey, group]) => ({
@@ -39,92 +51,23 @@ export function CloneEntrySection() {
     [groups],
   );
 
-  // --- state ---
-  const [sourceKey, setSourceKey] = useState<string>("");
-  const [targetOrigin, setTargetOrigin] = useState("");
-  const [targetPathname, setTargetPathname] = useState("");
-  const [targetInputSig, setTargetInputSig] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [cloning, setCloning] = useState(false);
-
   const sourceEntry = sourceKey ? perInputDb[sourceKey] ?? null : null;
 
-  // Pre-fill target fields when a source is selected.
   const handleSourceChange = useCallback(
     (key: string | null) => {
-      setSourceKey(key ?? "");
-      setError(null);
-      setSuccess(null);
-
-      if (!key) return;
-
-      const entry = perInputDb[key];
-      if (entry) {
-        // Default target to same pathname / input sig — user typically only
-        // changes the origin.
-        setTargetPathname(entry.page.pathname);
-        setTargetInputSig(entry.input.signature);
-      }
-    },
-    [perInputDb],
-  );
-
-  const handleClone = useCallback(async () => {
-    setError(null);
-    setSuccess(null);
-
-    if (!sourceKey) {
-      setError("Select a source entry first.");
-      return;
-    }
-
-    const trimmedOrigin = targetOrigin.trim();
-    if (!trimmedOrigin) {
-      setError("Target origin is required.");
-      return;
-    }
-
-    // Basic origin validation (must look like a protocol + host).
-    try {
-      const url = new URL(trimmedOrigin);
-      if (url.origin !== trimmedOrigin) {
-        setError(
-          `Origin should not have a trailing path. Did you mean "${url.origin}"?`,
-        );
+      if (!key) {
+        setSource("");
         return;
       }
-    } catch {
-      setError(
-        'Target origin must be a valid URL origin (e.g. "https://example.com").',
-      );
-      return;
-    }
+      const entry = perInputDb[key];
+      setSource(key, entry?.page.pathname, entry?.input.signature);
+    },
+    [perInputDb, setSource],
+  );
 
-    const trimmedPathname = targetPathname.trim() || "/";
-    const trimmedSig = targetInputSig.trim() || undefined;
-
-    setCloning(true);
-    try {
-      const count = await cloneEntry(
-        sourceKey,
-        trimmedOrigin,
-        trimmedPathname,
-        trimmedSig,
-      );
-      setSuccess(`Cloned ${count} snippet(s) to ${trimmedOrigin}${trimmedPathname}.`);
-      setSourceKey("");
-      setTargetOrigin("");
-      setTargetPathname("");
-      setTargetInputSig("");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Clone failed unexpectedly.",
-      );
-    } finally {
-      setCloning(false);
-    }
-  }, [sourceKey, targetOrigin, targetPathname, targetInputSig, cloneEntry]);
+  const handleClone = useCallback(() => {
+    void runClone();
+  }, [runClone]);
 
   if (allEntries.length === 0) {
     return (
@@ -149,7 +92,6 @@ export function CloneEntrySection() {
         </p>
       </div>
 
-      {/* Source picker */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="clone-source">Source</Label>
         <Select value={sourceKey} onValueChange={handleSourceChange}>
@@ -188,7 +130,6 @@ export function CloneEntrySection() {
         </div>
       )}
 
-      {/* Target fields */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="clone-origin">Target origin</Label>
@@ -196,28 +137,18 @@ export function CloneEntrySection() {
             id="clone-origin"
             placeholder="https://other-site.com"
             value={targetOrigin}
-            onChange={(e) => {
-              setTargetOrigin(e.target.value);
-              setError(null);
-              setSuccess(null);
-            }}
+            onChange={(e) => setTargetOrigin(e.target.value)}
           />
         </div>
-
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="clone-pathname">Target pathname</Label>
           <Input
             id="clone-pathname"
             placeholder="/form"
             value={targetPathname}
-            onChange={(e) => {
-              setTargetPathname(e.target.value);
-              setError(null);
-              setSuccess(null);
-            }}
+            onChange={(e) => setTargetPathname(e.target.value)}
           />
         </div>
-
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="clone-input-sig">
             Target input signature{" "}
@@ -229,11 +160,7 @@ export function CloneEntrySection() {
             id="clone-input-sig"
             placeholder="id:email"
             value={targetInputSig}
-            onChange={(e) => {
-              setTargetInputSig(e.target.value);
-              setError(null);
-              setSuccess(null);
-            }}
+            onChange={(e) => setTargetInputSig(e.target.value)}
           />
         </div>
       </div>
@@ -242,13 +169,12 @@ export function CloneEntrySection() {
         size="sm"
         className="self-start"
         disabled={cloning || !sourceKey || !targetOrigin.trim()}
-        onClick={() => void handleClone()}
+        onClick={handleClone}
       >
         {cloning ? "Cloning..." : "Clone snippets"}
       </Button>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
-
       {success && (
         <p className="text-xs text-green-600 dark:text-green-400">{success}</p>
       )}

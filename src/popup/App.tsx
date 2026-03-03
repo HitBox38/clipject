@@ -1,52 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { ext } from "@/lib/ext";
-import {
-  getEnabled,
-  getGlobalSnippets,
-  getPerInputDb,
-  getTrackedInputs,
-  setEnabled,
-} from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { StartElementSelectionMessage } from "@/types/messages";
 import { useThemeInit } from "@/components/theme-switcher/hooks/use-theme-init";
+import { usePopupStore } from "./stores/popup-store";
 
 export function PopupApp() {
   useThemeInit();
-  const [enabled, setEnabledState] = useState(true);
-  const [globalCount, setGlobalCount] = useState(0);
-  const [inputCount, setInputCount] = useState(0);
-  const [trackedCount, setTrackedCount] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+
+  const loaded = usePopupStore((s) => s.loaded);
+  const enabled = usePopupStore((s) => s.enabled);
+  const globalCount = usePopupStore((s) => s.globalCount);
+  const inputCount = usePopupStore((s) => s.inputCount);
+  const trackedCount = usePopupStore((s) => s.trackedCount);
+  const loadStats = usePopupStore((s) => s.loadStats);
+  const toggleEnabled = usePopupStore((s) => s.toggleEnabled);
 
   useEffect(() => {
-    async function load() {
-      const [isEnabled, globals, db, tracked] = await Promise.all([
-        getEnabled(),
-        getGlobalSnippets(),
-        getPerInputDb(),
-        getTrackedInputs(),
-      ]);
-      setEnabledState(isEnabled);
-      setGlobalCount(globals.length);
+    void loadStats();
+  }, [loadStats]);
 
-      const totalInputSnippets = Object.values(db).reduce(
-        (sum, entry) => sum + entry.snippets.length,
-        0,
-      );
-      setInputCount(totalInputSnippets);
-      setTrackedCount(tracked.length);
-      setLoaded(true);
-    }
-    void load();
-  }, []);
-
-  const handleToggle = useCallback(async () => {
-    const next = !enabled;
-    setEnabledState(next);
-    await setEnabled(next);
-  }, [enabled]);
+  const handleToggle = useCallback(() => {
+    void toggleEnabled();
+  }, [toggleEnabled]);
 
   const handleSelectElement = useCallback(async () => {
     const [tab] = await ext.tabs.query({
@@ -65,15 +42,12 @@ export function PopupApp() {
       return;
     }
 
-    // Content script not reachable — inject it programmatically, then retry.
     const injected = await injectContentScript(tabId);
     if (injected && (await trySendMessage(tabId, message))) {
       window.close();
       return;
     }
 
-    // If we still can't reach the content script the tab is probably a
-    // restricted page (chrome://, about:, Web Store, etc.).
     console.warn("[ClipJect] Cannot reach content script on this tab.");
   }, []);
 
@@ -91,7 +65,6 @@ export function PopupApp() {
 
   return (
     <div className="flex w-[280px] flex-col gap-3 bg-background p-4 text-foreground">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-sm font-semibold">ClipJect</h1>
         <Button
@@ -105,7 +78,6 @@ export function PopupApp() {
 
       <Separator />
 
-      {/* Stats */}
       <div className="flex gap-4 text-center">
         <div className="flex-1">
           <p className="text-lg font-semibold">{globalCount}</p>
@@ -129,7 +101,6 @@ export function PopupApp() {
 
       <Separator />
 
-      {/* Actions */}
       <div className="flex flex-col gap-2">
         <Button
           variant="default"
@@ -153,14 +124,6 @@ export function PopupApp() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Helpers: content-script injection fallback
-// ---------------------------------------------------------------------------
-
-/**
- * Attempt to send a message to the content script in a given tab.
- * Returns `true` on success, `false` if the receiving end doesn't exist.
- */
 async function trySendMessage(
   tabId: number,
   message: StartElementSelectionMessage,
@@ -173,14 +136,6 @@ async function trySendMessage(
   }
 }
 
-/**
- * Programmatically inject the content script into a tab that doesn't have
- * it yet (e.g. tabs opened before the extension was installed, or after an
- * HMR reload during development).
- *
- * Reads the file list from the manifest so it stays in sync with whatever
- * `@crxjs/vite-plugin` outputs.
- */
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
     const manifest = ext.runtime.getManifest();
@@ -191,8 +146,6 @@ async function injectContentScript(tabId: number): Promise<boolean> {
       target: { tabId },
       files,
     });
-
-    // Give the freshly-injected script a moment to initialise its listeners.
     await new Promise<void>((r) => setTimeout(r, 150));
     return true;
   } catch (e) {
@@ -201,7 +154,6 @@ async function injectContentScript(tabId: number): Promise<boolean> {
   }
 }
 
-/** Minimal crosshair icon (no dependency on lucide-react). */
 function CrosshairIcon() {
   return (
     <svg

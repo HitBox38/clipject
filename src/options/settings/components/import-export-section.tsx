@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -11,55 +11,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { exportAllData } from "@/lib/storage";
 import { validateExportPayload } from "@/lib/import-validation";
-import { useOptionsStore } from "@/options/stores/options-store";
-import type { ClipjectExportPayload, ImportResult } from "@/types/storage";
-
-type ImportStrategy = "merge" | "replace";
+import { useImportExportStore } from "@/options/stores/import-export-store";
 
 /**
  * Settings section: export the entire DB as JSON, or import from a file.
  */
 export function ImportExportSection() {
-  const importData = useOptionsStore((s) => s.importData);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- export ---
-  const [exporting, setExporting] = useState(false);
+  const exporting = useImportExportStore((s) => s.exporting);
+  const strategy = useImportExportStore((s) => s.strategy);
+  const pendingPayload = useImportExportStore((s) => s.pendingPayload);
+  const importError = useImportExportStore((s) => s.importError);
+  const importResult = useImportExportStore((s) => s.importResult);
+  const confirmOpen = useImportExportStore((s) => s.confirmOpen);
 
-  const handleExport = useCallback(async () => {
-    setExporting(true);
-    try {
-      const payload = await exportAllData();
-      const json = JSON.stringify(payload, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+  const setStrategy = useImportExportStore((s) => s.setStrategy);
+  const runExport = useImportExportStore((s) => s.runExport);
+  const fileValid = useImportExportStore((s) => s.fileValid);
+  const fileError = useImportExportStore((s) => s.fileError);
+  const clearImportMessage = useImportExportStore((s) => s.clearImportMessage);
+  const cancelImport = useImportExportStore((s) => s.cancelImport);
+  const confirmImport = useImportExportStore((s) => s.confirmImport);
 
-      const date = new Date().toISOString().slice(0, 10);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `clipject-export-${date}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setExporting(false);
-    }
-  }, []);
-
-  // --- import ---
-  const [strategy, setStrategy] = useState<ImportStrategy>("merge");
-  const [pendingPayload, setPendingPayload] =
-    useState<ClipjectExportPayload | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const handleExport = useCallback(() => {
+    void runExport();
+  }, [runExport]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setImportError(null);
-      setImportResult(null);
-
+      clearImportMessage();
       const file = e.target.files?.[0];
       if (!file) return;
 
@@ -67,50 +49,26 @@ export function ImportExportSection() {
       reader.onload = () => {
         try {
           if (typeof reader.result !== "string") {
-            setImportError("The selected file could not be parsed as text.");
+            fileError("The selected file could not be parsed as text.");
             return;
           }
-
           const raw: unknown = JSON.parse(reader.result);
           const result = validateExportPayload(raw);
           if (!result.ok) {
-            setImportError(result.error);
+            fileError(result.error);
             return;
           }
-          setPendingPayload(result.payload);
-          setConfirmOpen(true);
+          fileValid(result.payload);
         } catch {
-          setImportError("The selected file is not valid JSON.");
+          fileError("The selected file is not valid JSON.");
         }
       };
-      reader.onerror = () => setImportError("Failed to read the file.");
+      reader.onerror = () => fileError("Failed to read the file.");
       reader.readAsText(file);
-
-      // Reset the input so selecting the same file again triggers onChange.
       e.target.value = "";
     },
-    [],
+    [clearImportMessage, fileError, fileValid],
   );
-
-  const handleConfirmImport = useCallback(async () => {
-    if (!pendingPayload) return;
-    try {
-      const result = await importData(pendingPayload, strategy);
-      setImportResult(result);
-      setPendingPayload(null);
-      setConfirmOpen(false);
-    } catch (err) {
-      setImportError(
-        err instanceof Error ? err.message : "Import failed unexpectedly.",
-      );
-      setConfirmOpen(false);
-    }
-  }, [pendingPayload, strategy, importData]);
-
-  const handleCancelImport = useCallback(() => {
-    setPendingPayload(null);
-    setConfirmOpen(false);
-  }, []);
 
   const summaryText = pendingPayload
     ? [
@@ -130,20 +88,18 @@ export function ImportExportSection() {
         </p>
       </div>
 
-      {/* Export */}
       <Button
         variant="outline"
         size="sm"
         className="self-start"
         disabled={exporting}
-        onClick={() => void handleExport()}
+        onClick={handleExport}
       >
         {exporting ? "Exporting..." : "Export data"}
       </Button>
 
       <Separator />
 
-      {/* Import */}
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium">Import strategy</p>
         <div className="flex gap-3">
@@ -201,7 +157,6 @@ export function ImportExportSection() {
         )}
       </div>
 
-      {/* Confirmation dialog */}
       <AlertDialog open={confirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -218,10 +173,10 @@ export function ImportExportSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelImport}>
+            <AlertDialogCancel onClick={cancelImport}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleConfirmImport()}>
+            <AlertDialogAction onClick={() => void confirmImport()}>
               Import
             </AlertDialogAction>
           </AlertDialogFooter>
