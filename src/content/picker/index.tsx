@@ -143,7 +143,6 @@ export const Picker = ({
           <PickerFooter
             onSaveCurrentValue={handleSaveCurrentValue}
             onAddNew={() => setIsAdding(true)}
-            hasCurrentValue={inputEl.value.trim().length > 0}
           />
         </>
       )}
