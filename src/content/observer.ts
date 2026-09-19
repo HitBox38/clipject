@@ -71,8 +71,21 @@ const handleFocusIn = (event: FocusEvent): void => {
 
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
-  if (!isSupportedField(target)) return;
-  if (isPasswordField(target)) return;
+  const host = document.getElementById("clipject-picker-host");
+  if (host?.contains(target)) return;
+
+  if (
+    !isSupportedField(target) ||
+    isPasswordField(target) ||
+    !isInputTracked(target)
+  ) {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    closePicker();
+    return;
+  }
+
+  // A new field must never inherit the previous field's picker or draft.
+  if (activeEl && activeEl !== target) closePicker();
 
   // Debounce rapid focus changes (e.g. quick tabbing).
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -116,10 +129,16 @@ const handleClickOutside = (event: MouseEvent): void => {
 // ---------------------------------------------------------------------------
 
 const openPickerFor = async (el: SupportedElement): Promise<void> => {
-  if (!extensionEnabled) return;
-
-  // Only open the picker for inputs that are tracked.
-  if (!isInputTracked(el)) return;
+  if (
+    !extensionEnabled ||
+    document.activeElement !== el ||
+    !isSupportedField(el) ||
+    isPasswordField(el) ||
+    !isInputTracked(el)
+  ) {
+    closePicker();
+    return;
+  }
 
   activeEl = el;
 
