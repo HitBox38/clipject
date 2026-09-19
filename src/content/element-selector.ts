@@ -168,15 +168,15 @@ const handleMouseOut = (event: MouseEvent): void => {
 }
 
 const handleClick = (event: MouseEvent): void => {
-  // Prevent normal click behavior while in selection mode.
-  event.preventDefault();
-  event.stopPropagation();
-
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
 
-  // Ignore clicks on the banner itself (handled separately).
+  // Let the banner's Cancel button receive its own click event.
   if (banner?.contains(target)) return;
+
+  // Prevent normal page clicks while in selection mode.
+  event.preventDefault();
+  event.stopPropagation();
 
   if (!isSupportedField(target)) return;
   if (isPasswordField(target)) return;
