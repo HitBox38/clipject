@@ -104,11 +104,17 @@ const validateSharedPayload = (raw: unknown): string | null => {
     return 'Input "tag" must be "input" or "textarea".';
   }
   if (!isNumber(raw.input.lastSeenAt)) return 'Missing input "lastSeenAt".';
+  if (raw.input.type !== undefined && !isString(raw.input.type)) {
+    return 'Input "type" must be a string if present.';
+  }
 
   // snippet
   if (!isRecord(raw.snippet)) return "Missing snippet data.";
   if (!isString(raw.snippet.id)) return 'Missing snippet "id".';
   if (!isString(raw.snippet.value)) return 'Missing snippet "value".';
+  if (raw.snippet.label !== undefined && !isString(raw.snippet.label)) {
+    return 'Snippet "label" must be a string if present.';
+  }
   if (!isNumber(raw.snippet.createdAt)) return 'Missing snippet "createdAt".';
   if (!isNumber(raw.snippet.updatedAt)) return 'Missing snippet "updatedAt".';
 
