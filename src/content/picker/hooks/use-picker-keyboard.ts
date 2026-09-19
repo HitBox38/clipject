@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SnippetItemData } from "../types";
 
 interface UsePickerKeyboardOptions {
+  enabled?: boolean;
   items: SnippetItemData[];
   onSelect: (item: SnippetItemData) => void;
   onClose: () => void;
@@ -17,6 +18,7 @@ interface UsePickerKeyboardOptions {
  * (e.g. after a search filter).
  */
 export function usePickerKeyboard({
+  enabled = true,
   items,
   onSelect,
   onClose,
@@ -80,12 +82,13 @@ export function usePickerKeyboard({
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     document.addEventListener("keydown", handleKeyDown, { capture: true });
     return () =>
       document.removeEventListener("keydown", handleKeyDown, {
         capture: true,
       });
-  }, [handleKeyDown]);
+  }, [enabled, handleKeyDown]);
 
   return { highlightedIndex, setHighlightedIndex };
 }
