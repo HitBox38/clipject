@@ -19,6 +19,7 @@ import type {
   TrackedInput,
 } from "@/types/storage";
 import { ext } from "./ext";
+import { isStorageWriter, requestStorageMutation } from "./storage-messaging";
 import {
   KEY_PAGE_TITLE_SEP,
   STORAGE_KEY_ENABLED,
@@ -63,6 +64,15 @@ export const saveInputSnippet = async (
   input: InputMeta,
   snippet: Snippet,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("saveInputSnippet", [
+      compositeKey,
+      page,
+      input,
+      snippet,
+    ]);
+  }
+
   const db = await getPerInputDb();
 
   const existing = db[compositeKey];
@@ -81,6 +91,13 @@ export const deleteInputSnippet = async (
   compositeKey: string,
   snippetId: string,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("deleteInputSnippet", [
+      compositeKey,
+      snippetId,
+    ]);
+  }
+
   const db = await getPerInputDb();
   const entry = db[compositeKey];
   if (!entry) return;
@@ -100,6 +117,14 @@ export const updateInputSnippet = async (
   snippetId: string,
   patch: Partial<Pick<Snippet, "value" | "label">>,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("updateInputSnippet", [
+      compositeKey,
+      snippetId,
+      patch,
+    ]);
+  }
+
   const db = await getPerInputDb();
   const entry = db[compositeKey];
   if (!entry) return;
@@ -115,6 +140,10 @@ export const updateInputSnippet = async (
 }
 
 export const deleteInputEntry = async (compositeKey: string): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("deleteInputEntry", [compositeKey]);
+  }
+
   const db = await getPerInputDb();
   delete db[compositeKey];
   await setKey(STORAGE_KEY_PER_INPUT_DB, db);
@@ -131,12 +160,20 @@ export const getGlobalSnippets = async (): Promise<GlobalSnippet[]> => {
 export const saveGlobalSnippet = async (
   snippet: GlobalSnippet,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("saveGlobalSnippet", [snippet]);
+  }
+
   const list = await getGlobalSnippets();
   list.push(snippet);
   await setKey(STORAGE_KEY_GLOBAL_SNIPPETS, list);
 }
 
 export const deleteGlobalSnippet = async (snippetId: string): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("deleteGlobalSnippet", [snippetId]);
+  }
+
   const list = await getGlobalSnippets();
   await setKey(
     STORAGE_KEY_GLOBAL_SNIPPETS,
@@ -148,6 +185,10 @@ export const updateGlobalSnippet = async (
   snippetId: string,
   patch: Partial<Pick<Snippet, "value" | "label">>,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("updateGlobalSnippet", [snippetId, patch]);
+  }
+
   const list = await getGlobalSnippets();
   const snippet = list.find((s) => s.id === snippetId);
   if (!snippet) return;
@@ -168,6 +209,10 @@ export const getEnabled = async (): Promise<boolean> => {
 }
 
 export const setEnabled = async (enabled: boolean): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("setEnabled", [enabled]);
+  }
+
   await setKey(STORAGE_KEY_ENABLED, enabled);
 }
 
@@ -180,6 +225,10 @@ export const getTheme = async (): Promise<Theme> => {
 }
 
 export const setTheme = async (theme: Theme): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("setTheme", [theme]);
+  }
+
   await setKey(STORAGE_KEY_THEME, theme);
 }
 
@@ -194,6 +243,10 @@ export const getTrackedInputs = async (): Promise<TrackedInput[]> => {
 export const addTrackedInput = async (
   input: TrackedInput,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("addTrackedInput", [input]);
+  }
+
   const list = await getTrackedInputs();
   const fingerprint = buildTrackingFingerprint(
     input.origin,
@@ -216,6 +269,10 @@ export const addTrackedInput = async (
 export const removeTrackedInput = async (
   fingerprint: string,
 ): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("removeTrackedInput", [fingerprint]);
+  }
+
   const list = await getTrackedInputs();
   await setKey(
     STORAGE_KEY_TRACKED_INPUTS,
@@ -267,6 +324,10 @@ export const buildTrackedFingerprintSet = async (): Promise<Set<string>> => {
 // ---------------------------------------------------------------------------
 
 export const clearAllData = async (): Promise<void> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("clearAllData", []);
+  }
+
   await ext.storage.local.remove([
     STORAGE_KEY_PER_INPUT_DB,
     STORAGE_KEY_GLOBAL_SNIPPETS,
@@ -312,6 +373,10 @@ export const importAllData = async (
   payload: ClipjectExportPayload,
   strategy: "merge" | "replace",
 ): Promise<ImportResult> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("importAllData", [payload, strategy]);
+  }
+
   const { globalSnippets, perInputDb, trackedInputs } = payload.data;
 
   if (strategy === "replace") {
@@ -398,6 +463,15 @@ export const cloneInputEntry = async (
   targetPathname: string,
   targetInputSignature?: string,
 ): Promise<number> => {
+  if (!isStorageWriter()) {
+    return requestStorageMutation("cloneInputEntry", [
+      sourceKey,
+      targetOrigin,
+      targetPathname,
+      targetInputSignature,
+    ]);
+  }
+
   const db = await getPerInputDb();
   const source = db[sourceKey];
   if (!source) {
