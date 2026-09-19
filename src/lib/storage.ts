@@ -365,7 +365,7 @@ export const exportAllData = async (): Promise<ClipjectExportPayload> => {
  * Import a validated export payload into storage.
  *
  * @param payload  Must already be validated via `validateExportPayload`.
- * @param strategy "replace" wipes existing data first;
+ * @param strategy "replace" overwrites the data keys in one write;
  *                 "merge" adds incoming data on top of what already exists.
  * @returns Counts of what was imported so the UI can show a summary.
  */
@@ -380,10 +380,13 @@ export const importAllData = async (
   const { globalSnippets, perInputDb, trackedInputs } = payload.data;
 
   if (strategy === "replace") {
-    await clearAllData();
-    await setKey(STORAGE_KEY_GLOBAL_SNIPPETS, globalSnippets);
-    await setKey(STORAGE_KEY_PER_INPUT_DB, perInputDb);
-    await setKey(STORAGE_KEY_TRACKED_INPUTS, trackedInputs);
+    // Preserve existing data if the replacement is rejected (e.g. quota).
+    // Empty collections overwrite old records without a preceding removal.
+    await ext.storage.local.set({
+      [STORAGE_KEY_GLOBAL_SNIPPETS]: globalSnippets,
+      [STORAGE_KEY_PER_INPUT_DB]: perInputDb,
+      [STORAGE_KEY_TRACKED_INPUTS]: trackedInputs,
+    });
   } else {
     // --- merge global snippets (skip duplicates by id) ---
     const existingGlobal = await getGlobalSnippets();
