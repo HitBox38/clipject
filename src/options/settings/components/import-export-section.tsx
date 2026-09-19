@@ -167,7 +167,7 @@ export function ImportExportSection() {
               {strategy === "replace" && (
                 <>
                   {" "}
-                  This will <strong>wipe all existing data</strong> first.
+                  This will <strong>replace all existing snippets and tracked inputs</strong>.
                 </>
               )}
             </AlertDialogDescription>
