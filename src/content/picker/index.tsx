@@ -63,6 +63,7 @@ export const Picker = ({
   );
 
   const { highlightedIndex, setHighlightedIndex } = usePickerKeyboard({
+    enabled: !isAdding,
     items: filteredAll,
     onSelect: handleSelect,
     onClose,
