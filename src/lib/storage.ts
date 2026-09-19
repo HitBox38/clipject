@@ -413,6 +413,12 @@ export const cloneInputEntry = async (
   const pageKey = `${targetOrigin}${targetPathname}${KEY_PAGE_TITLE_SEP}${source.page.titleLastSeen}`;
   const compositeKey = `${pageKey}${KEY_PAGE_TITLE_SEP}${inputSig}`;
 
+  if (Object.hasOwn(db, compositeKey)) {
+    throw new Error(
+      "The destination already has snippets. Choose a different destination.",
+    );
+  }
+
   // Deep-clone snippets with fresh IDs.
   const clonedSnippets: Snippet[] = source.snippets.map((s) => ({
     id: crypto.randomUUID(),
