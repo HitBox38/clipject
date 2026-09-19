@@ -7,8 +7,12 @@
  *  - Future: message routing between content scripts and popup/options
  */
 
+import { initStorageMutations } from "./storage-mutations";
+
 import { ext } from "@/lib/ext";
 import { STORAGE_KEY_ENABLED } from "@/lib/constants";
+
+initStorageMutations();
 
 ext.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
