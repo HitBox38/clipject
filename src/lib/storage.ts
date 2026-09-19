@@ -396,6 +396,7 @@ export const cloneInputEntry = async (
   sourceKey: string,
   targetOrigin: string,
   targetPathname: string,
+  targetTitle: string,
   targetInputSignature?: string,
 ): Promise<number> => {
   const db = await getPerInputDb();
@@ -408,9 +409,8 @@ export const cloneInputEntry = async (
   const now = Date.now();
 
   // Build the new composite key: origin + pathname :: title :: inputSignature
-  // We reuse the source's last-seen title since the user hasn't visited the
-  // target yet — it will be updated on first visit.
-  const pageKey = `${targetOrigin}${targetPathname}${KEY_PAGE_TITLE_SEP}${source.page.titleLastSeen}`;
+  // Use the destination title because picker lookup includes document.title.
+  const pageKey = `${targetOrigin}${targetPathname}${KEY_PAGE_TITLE_SEP}${targetTitle}`;
   const compositeKey = `${pageKey}${KEY_PAGE_TITLE_SEP}${inputSig}`;
 
   // Deep-clone snippets with fresh IDs.
@@ -426,7 +426,7 @@ export const cloneInputEntry = async (
     page: {
       origin: targetOrigin,
       pathname: targetPathname,
-      titleLastSeen: source.page.titleLastSeen,
+      titleLastSeen: targetTitle,
     },
     input: {
       signature: inputSig,

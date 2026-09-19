@@ -5,6 +5,7 @@ interface CloneEntryState {
   sourceKey: string;
   targetOrigin: string;
   targetPathname: string;
+  targetTitle: string;
   targetInputSig: string;
   error: string | null;
   success: string | null;
@@ -13,6 +14,7 @@ interface CloneEntryState {
   setSource: (key: string, pathname?: string, inputSig?: string) => void;
   setTargetOrigin: (value: string) => void;
   setTargetPathname: (value: string) => void;
+  setTargetTitle: (value: string) => void;
   setTargetInputSig: (value: string) => void;
   clearMessage: () => void;
   cloneSuccess: (message: string) => void;
@@ -25,6 +27,7 @@ export const useCloneEntryStore = create<CloneEntryState>((set, get) => ({
   sourceKey: "",
   targetOrigin: "",
   targetPathname: "",
+  targetTitle: "",
   targetInputSig: "",
   error: null,
   success: null,
@@ -48,6 +51,10 @@ export const useCloneEntryStore = create<CloneEntryState>((set, get) => ({
     set({ targetPathname: value, error: null, success: null });
   },
 
+  setTargetTitle(value) {
+    set({ targetTitle: value, error: null, success: null });
+  },
+
   setTargetInputSig(value) {
     set({ targetInputSig: value, error: null, success: null });
   },
@@ -64,6 +71,7 @@ export const useCloneEntryStore = create<CloneEntryState>((set, get) => ({
       sourceKey: "",
       targetOrigin: "",
       targetPathname: "",
+      targetTitle: "",
       targetInputSig: "",
     });
   },
@@ -73,7 +81,13 @@ export const useCloneEntryStore = create<CloneEntryState>((set, get) => ({
   },
 
   async runClone() {
-    const { sourceKey, targetOrigin, targetPathname, targetInputSig } = get();
+    const {
+      sourceKey,
+      targetOrigin,
+      targetPathname,
+      targetTitle,
+      targetInputSig,
+    } = get();
     get().clearMessage();
 
     if (!sourceKey) {
@@ -112,6 +126,7 @@ export const useCloneEntryStore = create<CloneEntryState>((set, get) => ({
         sourceKey,
         trimmedOrigin,
         trimmedPathname,
+        targetTitle,
         trimmedSig,
       );
       get().cloneSuccess(

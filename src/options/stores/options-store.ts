@@ -72,6 +72,7 @@ interface OptionsState {
     sourceKey: string,
     targetOrigin: string,
     targetPathname: string,
+    targetTitle: string,
     targetInputSignature?: string,
   ) => Promise<number>;
 }
@@ -154,11 +155,18 @@ export const useOptionsStore = create<OptionsState>((set, get) => ({
 
   // ---- Clone ----
 
-  async cloneEntry(sourceKey, targetOrigin, targetPathname, targetInputSig) {
+  async cloneEntry(
+    sourceKey,
+    targetOrigin,
+    targetPathname,
+    targetTitle,
+    targetInputSig,
+  ) {
     const count = await cloneInputEntry(
       sourceKey,
       targetOrigin,
       targetPathname,
+      targetTitle,
       targetInputSig,
     );
     await get().loadAll();
