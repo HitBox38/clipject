@@ -24,7 +24,7 @@ export function SnippetRow({ snippet, onDelete, onEdit }: Props) {
     if (!trimmedValue) return;
     onEdit(snippet.id, {
       value: trimmedValue,
-      label: editLabel.trim() || undefined,
+      label: editLabel.trim(),
     });
     setEditing(false);
   }, [editValue, editLabel, snippet.id, onEdit]);
