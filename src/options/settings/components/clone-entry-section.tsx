@@ -27,6 +27,7 @@ export function CloneEntrySection() {
   const sourceKey = useCloneEntryStore((s) => s.sourceKey);
   const targetOrigin = useCloneEntryStore((s) => s.targetOrigin);
   const targetPathname = useCloneEntryStore((s) => s.targetPathname);
+  const targetTitle = useCloneEntryStore((s) => s.targetTitle);
   const targetInputSig = useCloneEntryStore((s) => s.targetInputSig);
   const error = useCloneEntryStore((s) => s.error);
   const success = useCloneEntryStore((s) => s.success);
@@ -35,6 +36,7 @@ export function CloneEntrySection() {
   const setSource = useCloneEntryStore((s) => s.setSource);
   const setTargetOrigin = useCloneEntryStore((s) => s.setTargetOrigin);
   const setTargetPathname = useCloneEntryStore((s) => s.setTargetPathname);
+  const setTargetTitle = useCloneEntryStore((s) => s.setTargetTitle);
   const setTargetInputSig = useCloneEntryStore((s) => s.setTargetInputSig);
   const runClone = useCloneEntryStore((s) => s.runClone);
 
@@ -148,6 +150,19 @@ export function CloneEntrySection() {
             value={targetPathname}
             onChange={(e) => setTargetPathname(e.target.value)}
           />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="clone-title">Target page title</Label>
+          <Input
+            id="clone-title"
+            value={targetTitle}
+            onChange={(e) => setTargetTitle(e.target.value)}
+            aria-describedby="clone-title-help"
+          />
+          <p id="clone-title-help" className="text-xs text-muted-foreground">
+            Enter the exact title shown in the destination browser tab.
+            Leave empty only if that page has no title.
+          </p>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="clone-input-sig">
