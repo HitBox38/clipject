@@ -39,7 +39,7 @@ export function SnippetEditor({
     if (!trimmedValue) return;
     await onEdit(compositeKey, snippet.id, {
       value: trimmedValue,
-      label: editLabel.trim() || undefined,
+      label: editLabel.trim(),
     });
     setEditing(false);
   }, [editValue, editLabel, compositeKey, snippet.id, onEdit]);
