@@ -1,13 +1,15 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ext } from "@/lib/ext";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Brand } from "@/components/brand";
 import type { StartElementSelectionMessage } from "@/types/messages";
 import { useThemeInit } from "@/components/theme-switcher/hooks/use-theme-init";
 import { usePopupStore } from "./stores/popup-store";
 
 export function PopupApp() {
   useThemeInit();
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const loaded = usePopupStore((s) => s.loaded);
   const enabled = usePopupStore((s) => s.enabled);
@@ -18,109 +20,141 @@ export function PopupApp() {
   const toggleEnabled = usePopupStore((s) => s.toggleEnabled);
 
   useEffect(() => {
-    void loadStats();
+    void loadStats().catch(() =>
+      setError("Couldn’t load your library. Reopen ClipJect to try again."),
+    );
   }, [loadStats]);
 
-  const handleToggle = useCallback(() => {
-    void toggleEnabled();
+  const handleToggle = useCallback(async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await toggleEnabled();
+    } catch {
+      setError("Couldn’t update ClipJect. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }, [toggleEnabled]);
 
   const handleSelectElement = useCallback(async () => {
-    const [tab] = await ext.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (!tab?.id) return;
+    setBusy(true);
+    setError("");
+    try {
+      const [tab] = await ext.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (!tab?.id) throw new Error("No active tab");
 
-    const tabId = tab.id;
-    const message: StartElementSelectionMessage = {
-      type: "CLIPJECT_START_ELEMENT_SELECTION",
-    };
+      const tabId = tab.id;
+      const message: StartElementSelectionMessage = {
+        type: "CLIPJECT_START_ELEMENT_SELECTION",
+      };
 
-    if (await trySendMessage(tabId, message)) {
-      window.close();
-      return;
+      if (await trySendMessage(tabId, message)) {
+        window.close();
+        return;
+      }
+
+      const injected = await injectContentScript(tabId);
+      if (injected && (await trySendMessage(tabId, message))) {
+        window.close();
+        return;
+      }
+
+      setError(
+        "This page doesn’t allow ClipJect. Try a regular webpage, then select a field.",
+      );
+    } catch {
+      setError("Couldn’t select a field on this page. Try another webpage.");
+    } finally {
+      setBusy(false);
     }
-
-    const injected = await injectContentScript(tabId);
-    if (injected && (await trySendMessage(tabId, message))) {
-      window.close();
-      return;
-    }
-
-    console.warn("[ClipJect] Cannot reach content script on this tab.");
   }, []);
 
   const handleOpenOptions = useCallback(() => {
-    ext.runtime.openOptionsPage();
+    void ext.runtime
+      .openOptionsPage()
+      .catch(() => setError("Couldn’t open your library. Please try again."));
   }, []);
 
   if (!loaded) {
     return (
-      <div className="flex w-[280px] items-center justify-center p-4 bg-background text-foreground">
-        <p className="text-xs text-muted-foreground">Loading...</p>
+      <div className="popup-shell" role="status">
+        <Brand />
+        <p className="popup-help">{error || "Loading your library…"}</p>
       </div>
     );
   }
-
   return (
-    <div className="flex w-[280px] flex-col gap-3 bg-background p-4 text-foreground">
-      <div className="flex items-center justify-between">
-        <h1 className="text-sm font-semibold">ClipJect</h1>
-        <Button
-          variant={enabled ? "default" : "outline"}
-          size="xs"
-          onClick={handleToggle}
+    <main className="popup-shell">
+      <header className="popup-heading">
+        <Brand />
+      </header>
+      <div className="popup-status">
+        <div>
+          <strong>{enabled ? "ClipJect is on" : "ClipJect is paused"}</strong>
+          <p>
+            {enabled
+              ? "Active in your selected fields."
+              : "Turn on to use snippets on webpages."}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-label="Enable ClipJect"
+          aria-checked={enabled}
+          className="popup-switch"
+          disabled={busy}
+          onClick={() => void handleToggle()}
         >
-          {enabled ? "Enabled" : "Disabled"}
-        </Button>
+          <span />
+        </button>
       </div>
-
-      <Separator />
-
-      <div className="flex gap-4 text-center">
-        <div className="flex-1">
-          <p className="text-lg font-semibold">{globalCount}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-            Global
-          </p>
+      <dl className="popup-stats">
+        <div>
+          <dd>{globalCount}</dd>
+          <dt>Global snippets</dt>
         </div>
-        <div className="flex-1">
-          <p className="text-lg font-semibold">{inputCount}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-            Per-input
-          </p>
+        <div>
+          <dd>{inputCount}</dd>
+          <dt>Field snippets</dt>
         </div>
-        <div className="flex-1">
-          <p className="text-lg font-semibold">{trackedCount}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-            Tracked
-          </p>
+        <div>
+          <dd>{trackedCount}</dd>
+          <dt>Selected fields</dt>
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="flex flex-col gap-2">
+      </dl>
+      <div className="flex flex-col gap-2.5">
         <Button
-          variant="default"
-          size="sm"
-          className="w-full"
-          onClick={handleSelectElement}
+          size="lg"
+          className="w-full h-9"
+          disabled={!enabled || busy}
+          onClick={() => void handleSelectElement()}
         >
           <CrosshairIcon />
-          Select Element
+          {busy ? "Working…" : "Select a field"}
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={handleOpenOptions}
-        >
-          Open Options
-        </Button>
+        <p className="popup-help">
+          Click a text field on this page to enable its snippet picker.
+        </p>
       </div>
-    </div>
+      {error && (
+        <p role="alert" className="inline-error">
+          {error}
+        </p>
+      )}
+      <Button
+        variant="outline"
+        className="w-full h-10"
+        onClick={handleOpenOptions}
+      >
+        Open snippet library <span aria-hidden="true">↗</span>
+      </Button>
+      <p className="local-note justify-center">Stored on this device</p>
+    </main>
   );
 }
 

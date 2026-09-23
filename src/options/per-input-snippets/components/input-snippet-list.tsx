@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { InputEntry, Snippet } from "@/types/storage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,24 @@ export function InputSnippetList({
   onDeleteEntry,
   onBack,
 }: Props) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      await onDeleteEntry(compositeKey);
+    } catch {
+      setError("Couldn’t delete these snippets. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
   const sigParts = entry.input.signature.split(":");
   const sigStrategy = sigParts[0];
   const sigValue = sigParts.slice(1).join(":");
@@ -36,7 +55,7 @@ export function InputSnippetList({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-1 px-1">
+      <div className="field-context">
         <p className="text-sm font-medium">
           {entry.page.origin}
           {entry.page.pathname}
@@ -45,20 +64,20 @@ export function InputSnippetList({
           Title: {entry.page.titleLastSeen}
         </p>
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant="outline" className="text-xs">
+          <Badge
+            variant="outline"
+            className="text-xs max-w-full whitespace-normal break-all"
+          >
             {entry.input.tag}
             {entry.input.type ? `[${entry.input.type}]` : ""}
           </Badge>
-          <Badge
-            variant={sigStrategy === "path" ? "destructive" : "secondary"}
-            className="text-xs"
-          >
+          <Badge variant="secondary" className="text-xs">
             {sigStrategy}: {sigValue}
           </Badge>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="snippet-table">
         {entry.snippets.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No snippets for this input.
@@ -78,13 +97,30 @@ export function InputSnippetList({
         )}
       </div>
 
-      <div className="flex justify-end">
+      {error && (
+        <p role="alert" className="inline-error">
+          {error}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2 justify-end">
+        {confirmDelete && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfirmDelete(false)}
+          >
+            Cancel
+          </Button>
+        )}
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onDeleteEntry(compositeKey)}
+          disabled={busy}
+          onClick={() => void handleDelete()}
         >
-          Delete all snippets for this input
+          {confirmDelete
+            ? "Confirm delete all field snippets"
+            : "Delete all snippets for this field"}
         </Button>
       </div>
     </div>

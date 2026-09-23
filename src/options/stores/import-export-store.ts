@@ -7,6 +7,7 @@ export type ImportStrategy = "merge" | "replace";
 
 interface ImportExportState {
   exporting: boolean;
+  importing: boolean;
   strategy: ImportStrategy;
   pendingPayload: ClipjectExportPayload | null;
   importError: string | null;
@@ -28,6 +29,7 @@ interface ImportExportState {
 
 export const useImportExportStore = create<ImportExportState>((set, get) => ({
   exporting: false,
+  importing: false,
   strategy: "merge",
   pendingPayload: null,
   importError: null,
@@ -88,6 +90,8 @@ export const useImportExportStore = create<ImportExportState>((set, get) => ({
       a.download = `clipject-export-${date}.json`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch {
+      set({ importError: "Couldn’t export your library. Please try again." });
     } finally {
       set({ exporting: false });
     }
@@ -95,7 +99,8 @@ export const useImportExportStore = create<ImportExportState>((set, get) => ({
 
   async confirmImport() {
     const { pendingPayload, strategy } = get();
-    if (!pendingPayload) return;
+    if (!pendingPayload || get().importing) return;
+    set({ importing: true });
     const importData = useOptionsStore.getState().importData;
     try {
       const result = await importData(pendingPayload, strategy);
@@ -104,6 +109,8 @@ export const useImportExportStore = create<ImportExportState>((set, get) => ({
       get().importFailed(
         err instanceof Error ? err.message : "Import failed unexpectedly.",
       );
+    } finally {
+      set({ importing: false });
     }
   },
 }));

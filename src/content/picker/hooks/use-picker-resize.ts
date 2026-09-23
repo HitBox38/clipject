@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PICKER_MAX_HEIGHT, PICKER_MIN_HEIGHT } from "../constants";
 
 interface UsePickerResizeResult {
@@ -20,7 +20,9 @@ export function usePickerResize(): UsePickerResizeResult {
   // Keep a ref in sync so the stable callback always reads the
   // latest value without re-creating itself.
   const maxHeightRef = useRef(maxHeight);
-  maxHeightRef.current = maxHeight;
+  useEffect(() => {
+    maxHeightRef.current = maxHeight;
+  }, [maxHeight]);
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

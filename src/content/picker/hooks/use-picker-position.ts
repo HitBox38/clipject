@@ -9,6 +9,7 @@ import {
 interface Position {
   top: number;
   left: number;
+  availableHeight: number;
 }
 
 /**
@@ -21,7 +22,12 @@ function calcPosition(
 ): Position | null {
   const rect = inputEl.getBoundingClientRect();
 
-  if (rect.width === 0 && rect.height === 0) {
+  if (
+    !inputEl.isConnected ||
+    rect.bottom < 0 ||
+    rect.top > window.innerHeight ||
+    (rect.width === 0 && rect.height === 0)
+  ) {
     return null;
   }
 
@@ -52,7 +58,12 @@ function calcPosition(
     left = VIEWPORT_PADDING;
   }
 
-  return { top, left };
+  top = Math.max(VIEWPORT_PADDING, Math.min(top, vh - 160));
+  return {
+    top,
+    left,
+    availableHeight: Math.max(0, vh - top - VIEWPORT_PADDING),
+  };
 }
 
 /**

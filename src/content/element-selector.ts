@@ -8,7 +8,11 @@
  *  - Esc / clicking the banner "X" -> cancel
  */
 
-import { computeInputSignature, isSupportedField, isPasswordField } from "@/lib/keys";
+import {
+  computeInputSignature,
+  isSupportedField,
+  isPasswordField,
+} from "@/lib/keys";
 import { addTrackedInput } from "@/lib/storage";
 import { PICKER_Z_INDEX } from "@/lib/constants";
 
@@ -19,7 +23,7 @@ let currentHighlight: HTMLElement | null = null;
 const HIGHLIGHT_OUTLINE = "2px solid #33a89e";
 const HIGHLIGHT_OUTLINE_OFFSET = "1px";
 const FLASH_BG = "rgba(51, 168, 158, 0.25)";
-const BANNER_HEIGHT = "40px";
+const BANNER_HEIGHT = "56px";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -34,7 +38,7 @@ export const startElementSelector = (): void => {
   document.addEventListener("mouseout", handleMouseOut, { capture: true });
   document.addEventListener("click", handleClick, { capture: true });
   document.addEventListener("keydown", handleKeyDown, { capture: true });
-}
+};
 
 export const stopElementSelector = (): void => {
   if (!active) return;
@@ -46,11 +50,11 @@ export const stopElementSelector = (): void => {
   document.removeEventListener("mouseout", handleMouseOut, { capture: true });
   document.removeEventListener("click", handleClick, { capture: true });
   document.removeEventListener("keydown", handleKeyDown, { capture: true });
-}
+};
 
 export const isElementSelectorActive = (): boolean => {
   return active;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Banner
@@ -62,16 +66,20 @@ const createBanner = (): void => {
 
   Object.assign(banner.style, {
     position: "fixed",
-    top: "0",
-    left: "0",
-    right: "0",
-    height: BANNER_HEIGHT,
+    top: "12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "min(560px, calc(100vw - 24px))",
+    borderRadius: "12px",
+    boxSizing: "border-box",
+    padding: "10px 14px",
+    minHeight: BANNER_HEIGHT,
     zIndex: String(PICKER_Z_INDEX),
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-    background: "#33a89e",
+    background: "#16665f",
     color: "#fff",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
@@ -83,14 +91,15 @@ const createBanner = (): void => {
   } satisfies Partial<Record<keyof CSSStyleDeclaration, string>>);
 
   const label = document.createElement("span");
-  label.textContent = "Click an input to track it with ClipJect.";
+  label.textContent = "ClipJect · Select a text field to use your snippets.";
   banner.appendChild(label);
 
   const cancelBtn = document.createElement("button");
   Object.assign(cancelBtn.style, {
     background: "rgba(255,255,255,0.2)",
     border: "1px solid rgba(255,255,255,0.4)",
-    borderRadius: "4px",
+    borderRadius: "6px",
+    flexShrink: "0",
     color: "#fff",
     padding: "3px 10px",
     fontSize: "12px",
@@ -105,14 +114,14 @@ const createBanner = (): void => {
   banner.appendChild(cancelBtn);
 
   document.body.appendChild(banner);
-}
+};
 
 const removeBanner = (): void => {
   if (banner) {
     banner.remove();
     banner = null;
   }
-}
+};
 
 // ---------------------------------------------------------------------------
 // Highlight helpers
@@ -126,7 +135,7 @@ const highlightElement = (el: HTMLElement): void => {
   el.dataset.clipjectPrevOutlineOffset = el.style.outlineOffset;
   el.style.outline = HIGHLIGHT_OUTLINE;
   el.style.outlineOffset = HIGHLIGHT_OUTLINE_OFFSET;
-}
+};
 
 const clearHighlight = (): void => {
   if (!currentHighlight) return;
@@ -137,7 +146,7 @@ const clearHighlight = (): void => {
   delete currentHighlight.dataset.clipjectPrevOutline;
   delete currentHighlight.dataset.clipjectPrevOutlineOffset;
   currentHighlight = null;
-}
+};
 
 /** Brief green flash to confirm the input was registered. */
 const flashConfirmation = (el: HTMLElement): void => {
@@ -146,7 +155,7 @@ const flashConfirmation = (el: HTMLElement): void => {
   setTimeout(() => {
     el.style.background = prevBg;
   }, 400);
-}
+};
 
 // ---------------------------------------------------------------------------
 // Event handlers
@@ -158,14 +167,14 @@ const handleMouseOver = (event: MouseEvent): void => {
   if (!isSupportedField(target)) return;
   if (isPasswordField(target)) return;
   highlightElement(target);
-}
+};
 
 const handleMouseOut = (event: MouseEvent): void => {
   const target = event.target;
   if (target === currentHighlight) {
     clearHighlight();
   }
-}
+};
 
 const handleClick = (event: MouseEvent): void => {
   const target = event.target;
@@ -182,7 +191,7 @@ const handleClick = (event: MouseEvent): void => {
   if (isPasswordField(target)) return;
 
   void registerInput(target as HTMLInputElement | HTMLTextAreaElement);
-}
+};
 
 const handleKeyDown = (event: KeyboardEvent): void => {
   if (event.key === "Escape") {
@@ -190,7 +199,7 @@ const handleKeyDown = (event: KeyboardEvent): void => {
     event.stopPropagation();
     stopElementSelector();
   }
-}
+};
 
 // ---------------------------------------------------------------------------
 // Registration
@@ -203,18 +212,31 @@ const registerInput = async (
   const pathname = window.location.pathname;
   const inputSignature = computeInputSignature(el);
 
-  await addTrackedInput({
-    origin,
-    pathname,
-    inputSignature,
-    registeredAt: Date.now(),
-  });
+  try {
+    await addTrackedInput({
+      origin,
+      pathname,
+      inputSignature,
+      registeredAt: Date.now(),
+    });
 
-  clearHighlight();
-  flashConfirmation(el);
+    clearHighlight();
+    flashConfirmation(el);
+    const label = banner?.firstElementChild;
+    if (label)
+      label.textContent = "Field selected. Focus it to open your snippets.";
 
-  // Small delay so the user sees the flash before banner disappears.
-  setTimeout(() => {
-    stopElementSelector();
-  }, 300);
-}
+    // Small delay so the user sees the flash before banner disappears.
+    setTimeout(() => {
+      stopElementSelector();
+      if (el.isConnected) {
+        el.blur();
+        el.focus({ preventScroll: true });
+      }
+    }, 1000);
+  } catch {
+    const label = banner?.firstElementChild;
+    if (label)
+      label.textContent = "Couldn’t save this field. Select it again to retry.";
+  }
+};

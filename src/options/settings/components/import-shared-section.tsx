@@ -13,6 +13,7 @@ import type { SharedSnippetPayload } from "@/types/storage";
 export function ImportSharedSection() {
   const loadAll = useOptionsStore((s) => s.loadAll);
 
+  const [importing, setImporting] = useState(false);
   const [raw, setRaw] = useState("");
   const [preview, setPreview] = useState<SharedSnippetPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,8 @@ export function ImportSharedSection() {
   }, [raw]);
 
   const handleImport = useCallback(async () => {
-    if (!preview) return;
+    if (!preview || importing) return;
+    setImporting(true);
     try {
       await importSharedSnippet(preview);
       await loadAll();
@@ -49,8 +51,10 @@ export function ImportSharedSection() {
       setError(
         err instanceof Error ? err.message : "Import failed unexpectedly.",
       );
+    } finally {
+      setImporting(false);
     }
-  }, [preview, loadAll]);
+  }, [preview, loadAll, importing]);
 
   const handleClear = useCallback(() => {
     setRaw("");
@@ -69,7 +73,12 @@ export function ImportSharedSection() {
         </p>
       </div>
 
+      <label htmlFor="shared-snippet" className="text-sm font-medium">
+        Share code
+      </label>
       <Textarea
+        id="shared-snippet"
+        disabled={importing}
         value={raw}
         onChange={(e) => {
           setRaw(e.target.value);
@@ -86,18 +95,27 @@ export function ImportSharedSection() {
           variant="outline"
           size="sm"
           onClick={handleDecode}
-          disabled={!raw.trim()}
+          disabled={!raw.trim() || importing}
         >
           Preview
         </Button>
         {(preview || raw) && (
-          <Button variant="ghost" size="sm" onClick={handleClear}>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={importing}
+            onClick={handleClear}
+          >
             Clear
           </Button>
         )}
       </div>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
 
       {preview && (
         <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 text-xs">
@@ -115,7 +133,7 @@ export function ImportSharedSection() {
               {preview.snippet.label}
             </p>
           )}
-          <p className="break-all">
+          <p className="break-words whitespace-pre-wrap">
             <span className="text-muted-foreground">Value:</span>{" "}
             {preview.snippet.value.length > 200
               ? `${preview.snippet.value.slice(0, 200)}...`
@@ -124,15 +142,16 @@ export function ImportSharedSection() {
           <Button
             size="sm"
             className="self-start"
+            disabled={importing}
             onClick={() => void handleImport()}
           >
-            Import this snippet
+            {importing ? "Importing…" : "Import this snippet"}
           </Button>
         </div>
       )}
 
       {success && (
-        <p className="text-xs text-green-600 dark:text-green-400">
+        <p role="status" className="text-xs text-primary">
           Snippet imported successfully.
         </p>
       )}

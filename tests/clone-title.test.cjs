@@ -45,3 +45,33 @@ for (const title of ["Destination title", "", "  Exact title  "]) {
     },
   );
 }
+
+test("clone forwards the exact destination title across extension contexts", async () => {
+  let request;
+  const load = createLoader({
+    "src/lib/storage-messaging.ts": {
+      isStorageWriter: () => false,
+      requestStorageMutation: async (operation, args) => {
+        request = { operation, args };
+        return 1;
+      },
+    },
+  });
+  await load("src/lib/storage.ts").cloneInputEntry(
+    "source",
+    "https://target.example",
+    "/form",
+    "Exact destination title",
+    "id:notes",
+  );
+  assert.deepEqual(request, {
+    operation: "cloneInputEntry",
+    args: [
+      "source",
+      "https://target.example",
+      "/form",
+      "Exact destination title",
+      "id:notes",
+    ],
+  });
+});

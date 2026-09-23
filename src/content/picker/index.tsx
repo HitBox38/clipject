@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { PickerProps, SnippetItemData } from "./types";
 import { usePickerPosition } from "./hooks/use-picker-position";
 import { useSnippets } from "./hooks/use-snippets";
@@ -25,9 +25,11 @@ export const Picker = ({
   onClose,
 }: PickerProps) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [saving, setSaving] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  const { perInputSnippets, globalSnippets, reload } =
+  const { perInputSnippets, globalSnippets, reload, loaded, error } =
     useSnippets(compositeKey);
 
   const perInputItems: SnippetItemData[] = useMemo(
@@ -37,13 +39,14 @@ export const Picker = ({
   );
 
   const globalItems: SnippetItemData[] = useMemo(
-    () =>
-      globalSnippets.map((s) => ({ snippet: s, scope: "global" as const })),
+    () => globalSnippets.map((s) => ({ snippet: s, scope: "global" as const })),
     [globalSnippets],
   );
 
-  const { query, setQuery, filteredPerInput, filteredGlobal } =
-    usePickerSearch(perInputItems, globalItems);
+  const { query, setQuery, filteredPerInput, filteredGlobal } = usePickerSearch(
+    perInputItems,
+    globalItems,
+  );
 
   const filteredAll = useMemo(
     () => [...filteredPerInput, ...filteredGlobal],
@@ -69,17 +72,26 @@ export const Picker = ({
     onClose,
   });
 
-  useEffect(() => {
-    setHighlightedIndex(filteredAll.length > 0 ? 0 : -1);
-  }, [filteredAll.length, setHighlightedIndex]);
-
   const handleSaveCurrentValue = useCallback(async () => {
     const currentValue = inputEl.value.trim();
-    if (!currentValue) return;
-    const snippet = createSnippet(currentValue);
-    await saveInputSnippet(compositeKey, pageMeta, inputMeta, snippet);
-    await reload();
-  }, [inputEl, compositeKey, pageMeta, inputMeta, reload]);
+    if (saving) return;
+    if (!currentValue) {
+      setFeedback("This field is empty. Type something first, then save it.");
+      return;
+    }
+    setSaving(true);
+    setFeedback("");
+    try {
+      const snippet = createSnippet(currentValue);
+      await saveInputSnippet(compositeKey, pageMeta, inputMeta, snippet);
+      await reload();
+      setFeedback("Saved for this field.");
+    } catch {
+      setFeedback("Couldn’t save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, inputEl, compositeKey, pageMeta, inputMeta, reload]);
 
   const handleAddNew = useCallback(
     async (value: string, label: string, scope: "input" | "global") => {
@@ -89,8 +101,8 @@ export const Picker = ({
       } else {
         await saveInputSnippet(compositeKey, pageMeta, inputMeta, snippet);
       }
-      setIsAdding(false);
       await reload();
+      setIsAdding(false);
     },
     [compositeKey, pageMeta, inputMeta, reload],
   );
@@ -101,18 +113,27 @@ export const Picker = ({
     <div
       ref={pickerRef}
       role="dialog"
-      aria-modal="true"
       aria-label="ClipJect snippet picker"
       className="clipject-picker"
-      style={{ top: position.top, left: position.left, maxHeight }}
+      style={{
+        top: position.top,
+        left: position.left,
+        maxHeight: Math.min(maxHeight, position.availableHeight ?? maxHeight),
+      }}
       onMouseDown={(e) => e.preventDefault()}
     >
       {/* ---- Header ---- */}
       <div className="clipject-header">
-        <span className="clipject-title">ClipJect</span>
+        <div>
+          <span className="clipject-title">ClipJect</span>
+          <span className="clipject-subtitle">
+            {isAdding ? "New snippet" : "Insert into this field"}
+          </span>
+        </div>
         <button
           type="button"
           className="cj-btn cj-btn--ghost cj-btn--icon-xs"
+          aria-label="Close snippet picker"
           onClick={onClose}
         >
           <CloseIcon />
@@ -124,7 +145,13 @@ export const Picker = ({
       {/* ---- Browse mode ---- */}
       {!isAdding && (
         <>
-          <SearchInput value={query} onChange={setQuery} />
+          <SearchInput
+            value={query}
+            onChange={(value) => {
+              setQuery(value);
+              setHighlightedIndex(0);
+            }}
+          />
 
           <SnippetList
             perInputItems={filteredPerInput}
@@ -133,15 +160,19 @@ export const Picker = ({
             onSelect={handleSelect}
             onHighlight={setHighlightedIndex}
             emptyText={
-              query
-                ? "No matching snippets"
-                : "No snippets yet. Add one below."
+              error ||
+              (loaded === false
+                ? "Loading snippets…"
+                : query
+                  ? "No matching snippets"
+                  : "No snippets yet. Add one below.")
             }
           />
 
           <div className="cj-separator" />
 
           <PickerFooter
+            saving={saving}
             onSaveCurrentValue={handleSaveCurrentValue}
             onAddNew={() => setIsAdding(true)}
           />
@@ -156,10 +187,20 @@ export const Picker = ({
         />
       )}
 
+      {feedback && (
+        <p className="clipject-feedback" role="status">
+          {feedback}
+        </p>
+      )}
+      {!isAdding && (
+        <p className="clipject-keyboard-hint">
+          ↑ ↓ to browse · Enter to insert · Esc to close
+        </p>
+      )}
       <ResizeHandle onMouseDown={onResizeStart} />
     </div>
   );
-}
+};
 
 const CloseIcon = () => {
   return (
@@ -175,4 +216,4 @@ const CloseIcon = () => {
       <path d="m6 6 12 12" />
     </svg>
   );
-}
+};

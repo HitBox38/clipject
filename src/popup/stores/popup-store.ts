@@ -47,7 +47,7 @@ export const usePopupStore = create<PopupState>((set, get) => ({
 
   async toggleEnabled() {
     const next = !get().enabled;
-    set({ enabled: next });
     await setEnabled(next);
+    set({ enabled: next });
   },
 }));

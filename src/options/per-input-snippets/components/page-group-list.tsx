@@ -1,5 +1,4 @@
 import type { PageGroup } from "../types";
-import { Badge } from "@/components/ui/badge";
 
 interface Props {
   groups: PageGroup[];
@@ -9,41 +8,51 @@ interface Props {
 export function PageGroupList({ groups, onSelectEntry }: Props) {
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-6 text-center">
-        No per-input snippets saved yet. Focus an input field on any page and
-        save a snippet to see it here.
-      </p>
+      <div className="empty-state">
+        <h2>No field snippets</h2>
+        <p>
+          Open ClipJect on a webpage, choose Select a field, then save text for
+          that field. It will appear here.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="page-directory">
       {groups.map((group) => (
-        <div key={group.pageKey} className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-muted-foreground px-1 truncate">
-            {group.pageLabel}
-          </p>
-          <div className="flex flex-col gap-1">
+        <section key={group.pageKey} className="page-directory-group">
+          <header className="page-directory-heading">
+            <h2>{group.entries[0][1].page.titleLastSeen || "Untitled page"}</h2>
+            <p>
+              {group.entries[0][1].page.origin}
+              {group.entries[0][1].page.pathname}
+            </p>
+          </header>
+          <div className="field-directory">
             {group.entries.map(([compositeKey, entry]) => {
               const count = entry.snippets.length;
               return (
                 <button
                   key={compositeKey}
                   type="button"
-                  className="flex items-center gap-2 rounded-lg border px-3 py-2 text-left hover:bg-muted/50 transition-colors w-full"
+                  className="field-directory-row"
                   onClick={() => onSelectEntry(compositeKey)}
                 >
                   <span className="text-sm flex-1 truncate min-w-0">
-                    {entry.input.signature}
+                    {entry.input.signature.replace(/^[^:]+:/, "")}
                   </span>
-                  <Badge variant="secondary" className="text-xs shrink-0">
+                  <span className="field-count">
                     {count} snippet{count !== 1 ? "s" : ""}
-                  </Badge>
+                  </span>
+                  <span aria-hidden="true" className="text-muted-foreground">
+                    →
+                  </span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
       ))}
     </div>
   );

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { SnippetItemData } from "../types";
 
 interface Props {
@@ -20,15 +21,21 @@ export const SnippetItem = ({
   onClick,
   onMouseEnter,
 }: Props) => {
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (highlighted) ref.current?.scrollIntoView({ block: "nearest" });
+  }, [highlighted]);
   const { snippet } = item;
   const displayLabel = snippet.label || undefined;
   const displayValue =
-    snippet.value.length > 80
-      ? `${snippet.value.slice(0, 80)}…`
+    snippet.value.length > 180
+      ? `${snippet.value.slice(0, 180)}…`
       : snippet.value;
 
   return (
     <button
+      ref={ref}
+      title={snippet.value}
       className={`clipject-item${highlighted ? " highlighted" : ""}`}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
@@ -40,4 +47,4 @@ export const SnippetItem = ({
       <span className="clipject-item-value">{displayValue}</span>
     </button>
   );
-}
+};

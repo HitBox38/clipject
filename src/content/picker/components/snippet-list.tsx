@@ -12,7 +12,7 @@ interface Props {
 
 /**
  * Renders the combined list: per-input snippets first, then globals.
- * Section labels are shown when both categories have items.
+ * Scope labels remain visible even when only one category has items.
  */
 export const SnippetList = ({
   perInputItems,
@@ -28,18 +28,13 @@ export const SnippetList = ({
     return <div className="clipject-empty">{emptyText}</div>;
   }
 
-  const showSections =
-    perInputItems.length > 0 && globalItems.length > 0;
-
   let runningIndex = 0;
 
   return (
     <div className="clipject-list">
       {perInputItems.length > 0 && (
         <>
-          {showSections && (
-            <div className="clipject-section-label">For this field</div>
-          )}
+          <div className="clipject-section-label">For this field</div>
           {perInputItems.map((item) => {
             const idx = runningIndex++;
             return (
@@ -57,9 +52,9 @@ export const SnippetList = ({
 
       {globalItems.length > 0 && (
         <>
-          {showSections && (
-            <div className="clipject-section-label">Global</div>
-          )}
+          <div className="clipject-section-label">
+            Global · any selected field
+          </div>
           {globalItems.map((item) => {
             const idx = runningIndex++;
             return (
@@ -76,4 +71,4 @@ export const SnippetList = ({
       )}
     </div>
   );
-}
+};

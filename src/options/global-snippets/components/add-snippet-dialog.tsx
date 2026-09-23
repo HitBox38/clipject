@@ -13,33 +13,42 @@ export function AddSnippetDialog({ onAdd }: Props) {
   const [value, setValue] = useState("");
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = useCallback(async () => {
     const trimmedValue = value.trim();
     if (!trimmedValue) return;
 
+    if (saving) return;
     setSaving(true);
-    await onAdd(trimmedValue, label.trim() || undefined);
-    setSaving(false);
-    setValue("");
-    setLabel("");
-    setOpen(false);
-  }, [value, label, onAdd]);
+    setError("");
+    try {
+      await onAdd(trimmedValue, label.trim() || undefined);
+      setValue("");
+      setLabel("");
+      setOpen(false);
+    } catch {
+      setError("Couldn’t save. Your draft is still here. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }, [value, label, onAdd, saving]);
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)} size="sm">
-        + Add global snippet
+      <Button onClick={() => setOpen(true)} className="add-snippet-button">
+        + New snippet
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
+    <div className="snippet-editor snippet-add-form">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="snippet-label">Label (optional)</Label>
         <Input
           id="snippet-label"
+          autoFocus
           placeholder="e.g. Greeting"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -52,12 +61,18 @@ export function AddSnippetDialog({ onAdd }: Props) {
           placeholder="The text to paste..."
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="min-h-[80px]"
+          className="min-h-32"
         />
       </div>
+      {error && (
+        <p role="alert" className="inline-error">
+          {error}
+        </p>
+      )}
       <div className="flex gap-2 justify-end">
         <Button
           variant="outline"
+          disabled={saving}
           size="sm"
           onClick={() => {
             setOpen(false);

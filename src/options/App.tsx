@@ -4,81 +4,99 @@ import { GlobalSnippetsPage } from "./global-snippets";
 import { PerInputSnippetsPage } from "./per-input-snippets";
 import { SettingsPage } from "./settings";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useThemeInit } from "@/components/theme-switcher/hooks/use-theme-init";
+import { Brand } from "@/components/brand";
 
 type Tab = "global" | "per-input" | "settings";
-
 const NAV_ITEMS: { id: Tab; label: string }[] = [
-  { id: "global", label: "Global Snippets" },
-  { id: "per-input", label: "Per-Input Snippets" },
+  { id: "global", label: "Global snippets" },
+  { id: "per-input", label: "Field snippets" },
   { id: "settings", label: "Settings" },
 ];
 
-function OptionsTabContent({ tab }: { tab: Tab }) {
-  switch (tab) {
-    case "global":
-      return <GlobalSnippetsPage />;
-    case "per-input":
-      return <PerInputSnippetsPage />;
-    case "settings":
-      return <SettingsPage />;
-  }
-}
-
 export function OptionsApp() {
   useThemeInit();
-
   const [tab, setTab] = useState<Tab>("global");
+  const [error, setError] = useState("");
   const loadAll = useOptionsStore((s) => s.loadAll);
   const loaded = useOptionsStore((s) => s.loaded);
-
+  const globalCount = useOptionsStore((s) => s.globalSnippets.length);
+  const fieldCount = useOptionsStore((s) =>
+    Object.values(s.perInputDb).reduce(
+      (sum, entry) => sum + entry.snippets.length,
+      0,
+    ),
+  );
+  const load = async () => {
+    setError("");
+    try {
+      await loadAll();
+    } catch {
+      setError("Your library couldn’t be loaded. Please try again.");
+    }
+  };
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
-
-  if (!loaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+    void loadAll().catch(() =>
+      setError("Your library couldn’t be loaded. Please try again."),
     );
-  }
-
+  }, [loadAll]);
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
-        {/* Header */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">ClipJect Options</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your saved snippets and extension settings.
-          </p>
+    <div className="options-shell">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      <header className="app-header">
+        <div className="app-header-inner">
+          <Brand />
+          <span className="app-context">Snippet library</span>
+          <span className="local-note">Stored on this device</span>
         </div>
-
-        <Separator />
-
-        <div className="flex gap-8">
-          {/* Sidebar nav */}
-          <nav className="flex w-48 shrink-0 flex-col gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Button
-                key={item.id}
-                variant={tab === item.id ? "secondary" : "ghost"}
-                size="sm"
-                className="justify-start"
-                onClick={() => setTab(item.id)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </nav>
-
-          {/* Content */}
-          <main className="flex-1 min-w-0">
-            <OptionsTabContent tab={tab} />
-          </main>
-        </div>
+        <nav aria-label="Library navigation" className="library-nav">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="nav-item"
+              aria-current={tab === item.id ? "page" : undefined}
+              onClick={() => setTab(item.id)}
+            >
+              <span>{item.label}</span>
+              {item.id !== "settings" && loaded && (
+                <span className="nav-count">
+                  {item.id === "global" ? globalCount : fieldCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </header>
+      <div className="library-layout">
+        <main id="main-content" tabIndex={-1} className="library-main">
+          {error ? (
+            <div className="empty-state" role="alert">
+              <h1>Library unavailable</h1>
+              <p>{error}</p>
+              <Button onClick={() => void load()}>Retry</Button>
+            </div>
+          ) : !loaded ? (
+            <div
+              className="loading-state"
+              role="status"
+              aria-label="Loading your library"
+            >
+              <div />
+              <div />
+              <div />
+              <span className="sr-only">Loading your library…</span>
+            </div>
+          ) : tab === "global" ? (
+            <GlobalSnippetsPage />
+          ) : tab === "per-input" ? (
+            <PerInputSnippetsPage />
+          ) : (
+            <SettingsPage />
+          )}
+        </main>
       </div>
     </div>
   );

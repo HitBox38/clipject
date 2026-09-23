@@ -24,7 +24,12 @@ test("cloning rejects an occupied destination without changing any data", async 
   );
   const before = memory.read();
   await assert.rejects(
-    storage.cloneInputEntry("source", "https://target.example", "/form"),
+    storage.cloneInputEntry(
+      "source",
+      "https://target.example",
+      "/form",
+      "Source",
+    ),
     /destination already has snippets/,
   );
   assert.deepEqual(memory.read(), before);
@@ -38,7 +43,12 @@ test("cloning into an unused destination still creates independent snippets", as
   const storage = load("src/lib/storage.ts");
   await storage.saveInputSnippet("source", page, input, snippet("source"));
   assert.equal(
-    await storage.cloneInputEntry("source", "https://target.example", "/form"),
+    await storage.cloneInputEntry(
+      "source",
+      "https://target.example",
+      "/form",
+      "Source",
+    ),
     1,
   );
   const entry = await storage.getInputEntry(

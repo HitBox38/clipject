@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -20,6 +19,7 @@ import { useImportExportStore } from "@/options/stores/import-export-store";
 export function ImportExportSection() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const importing = useImportExportStore((s) => s.importing);
   const exporting = useImportExportStore((s) => s.exporting);
   const strategy = useImportExportStore((s) => s.strategy);
   const pendingPayload = useImportExportStore((s) => s.pendingPayload);
@@ -81,7 +81,7 @@ export function ImportExportSection() {
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-col gap-0.5">
-        <p className="text-sm font-medium">Import / Export</p>
+        <p className="text-sm font-medium">Backup & restore</p>
         <p className="text-xs text-muted-foreground">
           Export your entire snippet database as a JSON file, or import one to
           restore or share data.
@@ -102,7 +102,7 @@ export function ImportExportSection() {
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium">Import strategy</p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <label className="flex items-center gap-1.5 text-xs">
             <input
               type="radio"
@@ -145,11 +145,13 @@ export function ImportExportSection() {
         </Button>
 
         {importError && (
-          <p className="text-xs text-destructive">{importError}</p>
+          <p role="alert" className="text-xs text-destructive">
+            {importError}
+          </p>
         )}
 
         {importResult && (
-          <p className="text-xs text-green-600 dark:text-green-400">
+          <p role="status" className="text-xs text-primary">
             Import complete: {importResult.globalSnippets} global snippet(s),{" "}
             {importResult.perInputEntries} per-input entry(-ies),{" "}
             {importResult.trackedInputs} tracked input(s).
@@ -157,7 +159,12 @@ export function ImportExportSection() {
         )}
       </div>
 
-      <AlertDialog open={confirmOpen}>
+      <AlertDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!open && !importing) cancelImport();
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm import</AlertDialogTitle>
@@ -167,18 +174,22 @@ export function ImportExportSection() {
               {strategy === "replace" && (
                 <>
                   {" "}
-                  This will <strong>replace all existing snippets and tracked inputs</strong>.
+                  This will{" "}
+                  <strong>
+                    replace all existing snippets and tracked inputs
+                  </strong>
+                  .
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelImport}>
+            <AlertDialogCancel disabled={importing} onClick={cancelImport}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => void confirmImport()}>
-              Import
-            </AlertDialogAction>
+            <Button disabled={importing} onClick={() => void confirmImport()}>
+              {importing ? "Importing…" : "Import"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

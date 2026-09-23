@@ -109,3 +109,48 @@ test("Picker passes disabled keyboard navigation while adding", () => {
   });
   assert.equal(options.enabled, false);
 });
+
+for (const [name, event, items] of [
+  [
+    "focused button",
+    { key: "Enter", composedPath: () => [{ closest: () => ({}) }] },
+    [{}],
+  ],
+  ["IME composition", { key: "Enter", isComposing: true }, [{}]],
+  ["empty search results", { key: "Enter" }, []],
+]) {
+  test("picker leaves " + name + " keyboard events alone", () => {
+    let handler;
+    const load = createLoader(
+      {
+        react: {
+          useState: () => [0, () => {}],
+          useRef: (current) => ({ current }),
+          useCallback: (fn) => fn,
+          useEffect: (fn) => fn(),
+        },
+      },
+      {
+        document: {
+          addEventListener: (_, fn) => {
+            handler = fn;
+          },
+          removeEventListener() {},
+        },
+      },
+    );
+    load("src/content/picker/hooks/use-picker-keyboard.ts").usePickerKeyboard({
+      items,
+      onSelect() {
+        assert.fail("Unexpected snippet insertion");
+      },
+      onClose() {},
+    });
+    handler({
+      ...event,
+      preventDefault() {
+        assert.fail("Native control interaction was intercepted");
+      },
+    });
+  });
+}

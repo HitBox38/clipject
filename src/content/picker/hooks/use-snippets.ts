@@ -11,6 +11,8 @@ interface UseSnippetsResult {
   perInputSnippets: Snippet[];
   globalSnippets: GlobalSnippet[];
   reload: () => Promise<void>;
+  loaded: boolean;
+  error: string;
 }
 
 /**
@@ -21,6 +23,9 @@ export function useSnippets(compositeKey: string): UseSnippetsResult {
   const [perInputSnippets, setPerInputSnippets] = useState<Snippet[]>([]);
   const [globalSnippets, setGlobalSnippets] = useState<GlobalSnippet[]>([]);
 
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
+
   const load = useCallback(async () => {
     const [entry, globals] = await Promise.all([
       getInputEntry(compositeKey),
@@ -29,12 +34,37 @@ export function useSnippets(compositeKey: string): UseSnippetsResult {
 
     setPerInputSnippets(entry?.snippets ?? []);
     setGlobalSnippets(globals);
+    setLoaded(true);
+    setError("");
   }, [compositeKey]);
 
-  // Initial load.
+  // Ignore an initial response after the target field has been unmounted.
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    async function initialize() {
+      try {
+        const [entry, globals] = await Promise.all([
+          getInputEntry(compositeKey),
+          getGlobalSnippets(),
+        ]);
+        if (cancelled) return;
+        setPerInputSnippets(entry?.snippets ?? []);
+        setGlobalSnippets(globals);
+        setLoaded(true);
+      } catch {
+        if (!cancelled) {
+          setError(
+            "Couldn’t load snippets. Close and reopen the picker to retry.",
+          );
+          setLoaded(true);
+        }
+      }
+    }
+    void initialize();
+    return () => {
+      cancelled = true;
+    };
+  }, [compositeKey]);
 
   // React to storage changes from other contexts (options page, other tabs).
   useEffect(() => {
@@ -45,7 +75,11 @@ export function useSnippets(compositeKey: string): UseSnippetsResult {
         STORAGE_KEY_PER_INPUT_DB in changes ||
         STORAGE_KEY_GLOBAL_SNIPPETS in changes
       ) {
-        void load();
+        void load().catch(() =>
+          setError(
+            "Couldn’t refresh snippets. Close and reopen the picker to retry.",
+          ),
+        );
       }
     };
 
@@ -53,5 +87,5 @@ export function useSnippets(compositeKey: string): UseSnippetsResult {
     return () => ext.storage.onChanged.removeListener(listener);
   }, [load]);
 
-  return { perInputSnippets, globalSnippets, reload: load };
+  return { perInputSnippets, globalSnippets, reload: load, loaded, error };
 }

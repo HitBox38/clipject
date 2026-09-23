@@ -28,7 +28,7 @@ const injectStyles = (shadow: ShadowRoot): void => {
   const style = document.createElement("style");
   style.textContent = getPickerCSS();
   shadow.appendChild(style);
-}
+};
 
 const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
   if (shadowHost && shadowRoot) {
@@ -63,7 +63,7 @@ const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
   cleanupTheme = initPickerTheme(container);
 
   return { shadow: shadowRoot, container };
-}
+};
 
 export const mountPicker = (props: PickerProps): void => {
   const { container } = ensureHost();
@@ -75,7 +75,7 @@ export const mountPicker = (props: PickerProps): void => {
 
   reactRoot = createRoot(container);
   reactRoot.render(createElement(Picker, props));
-}
+};
 
 export const unmountPicker = (): void => {
   if (reactRoot) {
@@ -91,7 +91,7 @@ export const unmountPicker = (): void => {
     shadowHost = null;
     shadowRoot = null;
   }
-}
+};
 
 // ---------------------------------------------------------------------------
 // Scoped CSS for the picker.
@@ -148,7 +148,7 @@ const getPickerCSS = (): string => {
       --cj-foreground:   oklch(0.141 0.005 285.823);
       --cj-popover:      oklch(1 0 0);
       --cj-popover-fg:   oklch(0.141 0.005 285.823);
-      --cj-primary:      oklch(0.60 0.10 185);
+      --cj-primary:      oklch(0.46 0.08 185);
       --cj-primary-fg:   oklch(0.98 0.01 181);
       --cj-secondary:    oklch(0.967 0.001 286.375);
       --cj-secondary-fg: oklch(0.21 0.006 285.885);
@@ -157,7 +157,7 @@ const getPickerCSS = (): string => {
       --cj-border:       oklch(0.92 0.004 286.32);
       --cj-input:        oklch(0.92 0.004 286.32);
       --cj-ring:         oklch(0.705 0.015 286.067);
-      --cj-radius:       0.625rem;
+      --cj-radius:       0.375rem;
     }
 
     #clipject-root.dark {
@@ -235,17 +235,17 @@ const getPickerCSS = (): string => {
     /* --- sizes --- */
 
     .cj-btn--xs {
-      height: 24px;
+      height: 28px;
       gap: 4px;
       padding: 0 8px;
       font-size: 12px;
-      border-radius: 8px;
+      border-radius: 5px;
     }
 
     .cj-btn--xs svg { width: 12px; height: 12px; }
 
     .cj-btn--sm {
-      height: 28px;
+      height: 34px;
       gap: 4px;
       padding: 0 10px;
       font-size: 12.8px;
@@ -255,7 +255,7 @@ const getPickerCSS = (): string => {
     .cj-btn--sm svg { width: 14px; height: 14px; }
 
     .cj-btn--icon-xs {
-      width: 24px;
+      width: 28px;
       height: 24px;
       padding: 0;
       border-radius: 8px;
@@ -402,12 +402,13 @@ const getPickerCSS = (): string => {
       line-height: 1.5;
       color: var(--cj-popover-fg);
       background: var(--cj-popover);
-      border-radius: calc(var(--cj-radius) + 4px);          /* rounded-xl = 14px */
+      border-radius: 8px;          /* rounded-xl = 14px */
       box-shadow:
         0 0 0 1px color-mix(in oklch, var(--cj-foreground) 10%, transparent),
         0 4px 6px -1px rgb(0 0 0 / 0.1),
         0 2px 4px -2px rgb(0 0 0 / 0.1);
-      width: 280px;
+      width: 340px;
+      max-width: calc(100vw - 16px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -474,8 +475,8 @@ const getPickerCSS = (): string => {
       padding: 6px 8px 4px;
       font-size: 11px;
       font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      text-transform: none;
+      letter-spacing: 0.01em;
       color: var(--cj-muted-fg);
     }
 
@@ -487,7 +488,7 @@ const getPickerCSS = (): string => {
       display: flex;
       flex-direction: column;
       gap: 1px;
-      padding: 7px 8px;
+      padding: 10px 12px;
       cursor: pointer;
       border: none;
       background: none;
@@ -551,7 +552,8 @@ const getPickerCSS = (): string => {
     ================================================================== */
 
     .clipject-form {
-      padding: 8px 12px 4px;
+      padding: 14px 16px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -561,7 +563,8 @@ const getPickerCSS = (): string => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .clipject-scope {
@@ -606,6 +609,16 @@ const getPickerCSS = (): string => {
        5i.  Scrollbar
     ================================================================== */
 
+    .clipject-subtitle { display: block; font-size: 12px; color: var(--cj-muted-fg); line-height: 1.5; font-weight: 400; }
+    .clipject-feedback { padding: 8px 12px; font-size: 12px; background: var(--cj-muted); flex-shrink: 0; }
+    .clipject-keyboard-hint { padding: 4px 12px 0; text-align: center; font-size: 10px; color: var(--cj-muted-fg); flex-shrink: 0; }
+    .clipject-item-label, .clipject-item-value { max-width: 100%; }
+    .clipject-item-value { white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.5; }
+    .clipject-item:focus-visible { outline: 2px solid var(--cj-primary); outline-offset: -2px; }
+    .cj-btn--default:hover { filter: brightness(.92); }
+    .clipject-footer { flex-shrink: 0; padding: 10px 12px; }
+    .clipject-list { min-height: 0; overscroll-behavior: contain; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
     .clipject-list::-webkit-scrollbar { width: 6px; }
     .clipject-list::-webkit-scrollbar-track { background: transparent; }
 
@@ -618,4 +631,4 @@ const getPickerCSS = (): string => {
       background: var(--cj-muted-fg);
     }
   `;
-}
+};

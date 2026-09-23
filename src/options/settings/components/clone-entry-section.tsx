@@ -48,12 +48,9 @@ export function CloneEntrySection() {
     }));
   }, [perInputDb]);
 
-  const allEntries = useMemo(
-    () => groups.flatMap((g) => g.entries),
-    [groups],
-  );
+  const allEntries = useMemo(() => groups.flatMap((g) => g.entries), [groups]);
 
-  const sourceEntry = sourceKey ? perInputDb[sourceKey] ?? null : null;
+  const sourceEntry = sourceKey ? (perInputDb[sourceKey] ?? null) : null;
 
   const handleSourceChange = useCallback(
     (key: string | null) => {
@@ -97,7 +94,7 @@ export function CloneEntrySection() {
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="clone-source">Source</Label>
         <Select value={sourceKey} onValueChange={handleSourceChange}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger id="clone-source" className="w-full">
             <SelectValue placeholder="Select a source entry..." />
           </SelectTrigger>
           <SelectContent>
@@ -160,8 +157,8 @@ export function CloneEntrySection() {
             aria-describedby="clone-title-help"
           />
           <p id="clone-title-help" className="text-xs text-muted-foreground">
-            Enter the exact title shown in the destination browser tab.
-            Leave empty only if that page has no title.
+            Enter the exact title shown in the destination browser tab. Leave
+            empty only if that page has no title.
           </p>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -189,9 +186,15 @@ export function CloneEntrySection() {
         {cloning ? "Cloning..." : "Clone snippets"}
       </Button>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
       {success && (
-        <p className="text-xs text-green-600 dark:text-green-400">{success}</p>
+        <p role="status" className="text-xs text-primary">
+          {success}
+        </p>
       )}
     </div>
   );

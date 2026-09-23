@@ -32,7 +32,8 @@ export const SearchInput = ({ value, onChange }: Props) => {
           <path d="m21 21-4.3-4.3" />
         </svg>
         <input
-          type="text"
+          type="search"
+          aria-label="Search snippets"
           className="cj-input"
           placeholder="Search snippets…"
           value={value}
@@ -41,4 +42,4 @@ export const SearchInput = ({ value, onChange }: Props) => {
       </div>
     </div>
   );
-}
+};
