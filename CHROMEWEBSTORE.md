@@ -76,9 +76,9 @@ copy/export, website insertion, and deletion details are in [PRIVACY.md](PRIVACY
 ## Privacy policy URL
 
 The approved policy is in this release and will be public on this repository's
-main branch after the approved push:
+`master` branch after the approved push:
 
-`https://github.com/HitBox38/clipject/blob/main/PRIVACY.md`
+`https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`
 
 Verify the policy URL opens while signed out after the push. The support URL
 responded publicly during preparation.

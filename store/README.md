@@ -33,9 +33,9 @@ whole repository as the installable extension.
 
 ## Remaining steps in your accounts
 
-1. The approved privacy policy is included in the push to the public `main`
+1. The approved privacy policy is included in the push to the public `master`
    branch. Its URL is
-   `https://github.com/HitBox38/clipject/blob/main/PRIVACY.md`.
+   `https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.
    Verify it opens while signed out after the push.
 2. Upload each store's matching ZIP. Firefox also needs the separate source ZIP.
 3. Paste listing fields, attach images, and enter privacy disclosures. Use the
