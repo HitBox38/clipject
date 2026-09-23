@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SunIcon, MoonIcon, ComputerIcon } from "@hugeicons/core-free-icons";
+import SunIcon from "@hugeicons/core-free-icons/Sun01Icon";
+import MoonIcon from "@hugeicons/core-free-icons/MoonIcon";
+import ComputerIcon from "@hugeicons/core-free-icons/ComputerIcon";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "./hooks/use-theme-store";
 import { THEME_OPTIONS } from "./constants";

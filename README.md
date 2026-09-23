@@ -29,25 +29,13 @@ The primary target is Chrome with Manifest V3. The extension manifest is at
 - **Preferences:** enable/disable the extension from the popup and choose light,
   dark, or system themes. The popup shows snippet and tracking counts.
 - **Cloning:** Settings includes a form for copying an input's snippets to
-  another origin, path, page title, and optional input signature. This flow has
-  a current integration blocker described below.
+  another origin, path, page title, and optional input signature.
 
 ## Current project status
 
-The ten initial review fixes have been merged. Verification of combined `master`
-at `2780c79` found a remaining integration problem:
-
-- **Production build is blocked:** `cloneInputEntry` accepts a destination title,
-  but its background-message argument list omits that title. TypeScript reports
-  `TS2322` in [src/lib/storage.ts](src/lib/storage.ts). The request must include
-  the title before the optional input signature for cloning through Options to
-  work correctly.
-- **Regression tests:** 22 of 24 pass. The two tests in
-  [tests/clone-collision.test.cjs](tests/clone-collision.test.cjs) still call the
-  old clone signature and need the explicit destination title.
-
-The commands below describe the development workflow. A successful production
-build requires resolving that blocker first.
+The initial review fixes and clone-title integration fix have been merged.
+The regression suite contains 28 tests, including cloning across extension
+contexts and rejecting occupied clone destinations.
 
 ## Using ClipJect
 
@@ -142,8 +130,9 @@ share an identity, and a DOM path can change when a site changes its layout.
 
 ### Prerequisites
 
-- Node.js **22.12+** recommended. Vite 7 requires Node `^20.19.0 || >=22.12.0`.
-- pnpm, using the checked-in `pnpm-lock.yaml`.
+- Node.js **24 LTS** recommended; supported versions are `^22.13.0 || >=24.0.0`.
+- pnpm **11.19.0**, pinned in `package.json`, using the checked-in
+  `pnpm-lock.yaml`.
 
 ### Install and build
 
@@ -153,7 +142,7 @@ pnpm run build
 ```
 
 The build runs TypeScript checking followed by Vite and writes the extension to
-`dist/`. See the current build blocker above before troubleshooting installation.
+`dist/`.
 
 ### Load in Chrome or Edge
 
@@ -198,9 +187,14 @@ or replace loading the unpacked extension.
 
 ## Architecture
 
-The stack is Vite 7 with CRXJS, TypeScript, React 19, Tailwind CSS 4, shadcn/ui
+The stack is Vite 8 with CRXJS, TypeScript 6, React 19, Tailwind CSS 4, shadcn/ui
 components, and Zustand. Zustand manages UI state; extension storage provides
 persistence across browser contexts.
+
+TypeScript stays on the 6.0 release line because the test helpers and
+`typescript-eslint` use its compiler API. Node type definitions stay on version
+24 to match the recommended runtime. Updating the shadcn package does not
+regenerate the locally maintained components in `src/components/ui/`.
 
 | Location          | Responsibility                                                                       |
 | ----------------- | ------------------------------------------------------------------------------------ |
