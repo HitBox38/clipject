@@ -1,0 +1,28 @@
+Save reusable text and paste it into the fields you choose with ClipJect.
+
+Keep replies, templates, and frequently used text ready for the next time you need them. Save snippets for a specific field and page, or keep global snippets available across all fields you select.
+
+YOUR SNIPPETS, WHERE YOU NEED THEM
+Select a field once, then focus it to open your snippet picker. Field snippets appear first, followed by your global library. Search by label or text, then click a snippet to replace the field's value. ClipJect does not submit the form.
+
+BUILD AND MANAGE YOUR LIBRARY
+Save a field's current text with Save current, or choose + Add new to write a snippet. Add labels, edit text, copy snippets, and delete entries from the snippet library. Choose light, dark, or system appearance.
+
+MOVE YOUR TEXT WHEN YOU CHOOSE
+Export a local backup and import it later. Copy a field snippet's share code for manual transfer, preview shared snippets before importing, or clone a field's snippets to another page. Share codes and backups are not encrypted.
+
+GET STARTED
+1. Open ClipJect from your browser toolbar.
+2. Choose Select a field and click a text input or textarea on the page.
+3. Focus that field, then save or choose a snippet.
+4. Open Snippet library to manage your saved text.
+
+Use the arrow keys to browse the picker, Enter to insert, and Esc to close it. Global snippets appear in fields you have selected; the picker does not open automatically on every field.
+
+LOCAL STORAGE, NO ACCOUNT REQUIRED
+Saved snippets, selected-field identifiers, and associated page details stay in your browser profile. ClipJect has no analytics, developer server, or automatic cloud sync. Website access lets it recognize selected fields and insert text across websites. The developer does not receive your saved data. A website can read text you insert into its fields under its own privacy practices.
+
+Password fields, browser-internal pages, rich-text editors, and fields inside embedded frames or shadow roots are not supported. Some specialized input types enforce their own formatting rules.
+
+Free and open source under the MIT license.
+Support: https://github.com/HitBox38/clipject/issues

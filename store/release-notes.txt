@@ -1,0 +1,5 @@
+ClipJect 1.0.0 — first store release.
+
+Select the webpage fields where you want to reuse text. Save field-specific snippets or keep a global library, search and paste with the keyboard or mouse, and manage labels and text in your snippet library.
+
+Includes light/dark/system appearance, local backup export/import, share codes, field cloning, and a confirmed Delete all control. No account, automatic cloud sync, or analytics. Password fields are excluded.

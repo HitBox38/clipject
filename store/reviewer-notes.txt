@@ -1,0 +1,18 @@
+ClipJect 1.0.0 is a local snippet manager. No login, paid service, API key, or network backend is needed. All code and fonts ship inside the package. Firefox reviewers: the separate source ZIP includes BUILDING.md with exact build commands, tool versions, and environment details.
+
+Suggested review steps:
+1. Install the extension and open a regular HTTP(S) page with a native input or textarea. Do not use a browser settings page, store page, rich-text editor, embedded frame, or shadow-root field.
+2. Click the ClipJect toolbar icon and select Select a field. Click the input/textarea to register it. If needed, focus another element and return to the selected field.
+3. In the picker, select + Add new. Enter sample text and an optional label, choose the field-specific scope, then save. Click the saved snippet and confirm the entire field value is replaced.
+4. Add another snippet with global scope. Register a field on another page; the global snippet is available there, while field snippets remain scoped to their page/title and field identity.
+5. Type sample text into the field and choose Save current. This is the explicit action that reads and saves the current value.
+6. Check search, arrow keys, Enter, and Esc. Password fields cannot be selected.
+7. Open Snippet library from the toolbar popup. Edit/delete a global or field snippet. Under Settings, try export/import with sample data, share-code preview/import, appearance settings, and Delete all (confirmation required).
+
+The picker opens only on explicitly registered fields or fields that already have snippets. Global snippets alone do not activate every input. Pasting fires input/change events and does not submit a form; the destination website can handle those events normally.
+
+The storage permission keeps snippets, page/field metadata, and settings in local extension storage. Broad content-script matches recognize selected fields on websites chosen by the user. activeTab and scripting start field selection or inject the bundled content script into an already-open tab when needed. The extension does not read browser history or continuously save typed text.
+
+No data is sent to a developer server. Export downloads a local file; Copy/Share writes to the clipboard after a click. A share code contains both snippet text and page/field metadata. These transfers are user-controlled and are not encrypted. Delete all removes snippets and selected fields while retaining appearance and enabled preferences.
+
+Firefox validation: the bundled React DOM code generates two innerHTML warnings. Saved snippet values are rendered as React text children or form values, not passed to innerHTML or dangerouslySetInnerHTML. The source archive is supplied for inspection. A separate compatibility warning concerns Android's data-consent support before Firefox 142; this release targets desktop only. The manifest declares no off-device data collection using required: ["none"].

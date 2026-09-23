@@ -5,8 +5,9 @@ forms. Choose the fields you want to track, then focus a tracked field to open a
 searchable snippet picker. Save snippets for that field and page, or keep global
 snippets available across all tracked fields.
 
-The primary target is Chrome with Manifest V3. The extension manifest is at
-**0.1.0**; this is an early-stage project developed and loaded from source.
+Chrome and desktop Firefox use separate Manifest V3 builds. Version **1.0.0**
+is prepared for store submission; it has not been published by this work.
+See the [submission kit](store/README.md) for packages, images, and listing copy.
 
 ## Features
 
@@ -113,8 +114,9 @@ share an identity, and a DOM path can change when a site changes its layout.
   local development.
 - **Edge:** uses the same unpacked Chromium installation workflow; separate
   browser verification is still needed.
-- **Firefox:** a future compatibility target. The `browser`/`chrome` API wrapper
-  is a starting point, not a verified Firefox build or installation path.
+- **Firefox:** desktop Firefox 140+ build via `pnpm run build:firefox`.
+  Load `dist-firefox/manifest.json` as a temporary add-on in `about:debugging`.
+  See [verification details](store/VERIFICATION.md) for tested coverage.
 - Supported fields are native `textarea` elements and input types other than
   password, hidden, file, image, submit, reset, button, checkbox, radio, range,
   and color. Typed inputs such as number or date still enforce browser rules.
@@ -143,6 +145,10 @@ pnpm run build
 
 The build runs TypeScript checking followed by Vite and writes the extension to
 `dist/`.
+
+For Firefox, run `pnpm run build:firefox` to write `dist-firefox/`. To build both
+targets and generate store ZIPs plus Mozilla's source archive, run
+`pnpm run release`. See [BUILDING.md](BUILDING.md) for reproducible review steps.
 
 ### Load in Chrome or Edge
 

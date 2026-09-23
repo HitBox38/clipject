@@ -1,67 +1,116 @@
-# Chrome Web Store listing — ClipJect
+# Chrome Web Store submission — ClipJect
 
-Last updated: 2026-09-23. Draft only; no store submission made.
+Prepared September 23, 2026 for version 1.0.0. Not submitted or published.
+Start with [the upload guide](store/README.md).
 
-## Store listing
+## Upload and listing fields
 
-- Extension name: ClipJect
-- Short description: Save and paste snippets into any input field, scoped per page or globally.
-- Category: Productivity
-- Single purpose: Save reusable text and insert it into user-selected webpage fields.
-- Primary language: English
+| Dashboard field | Value / file |
+| --- | --- |
+| Package | `release/1.0.0/clipject-1.0.0-chrome.zip` |
+| Name | ClipJect |
+| Summary | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
+| Detailed description | Copy `store/listing-description.txt` |
+| Primary language | English |
+| Category | Productivity; choose Tools if offered as a subcategory |
+| Publisher | Tomer Norman (match your existing publisher account) |
+| Support URL | `https://github.com/HitBox38/clipject/issues` |
+| Homepage | `https://github.com/HitBox38/clipject` |
+| Price | Free |
+| Suggested visibility / regions | Public / All regions |
 
-### Detailed description draft
+Use your existing verified account email wherever the dashboard requires a
+publisher contact. No separate support mailbox was created. Complete any
+account-specific trader/contact declarations using your own details.
 
-Keep frequently used text on hand with ClipJect. Select a text field on a webpage, save a snippet, and insert it with a click the next time you need it.
+## Single purpose
 
-Keep global snippets for use across selected fields, or save text for one particular field and page. Search your library, edit labels and text, preview long snippets, and choose light, dark, or system appearance. Export a backup, restore it later, or explicitly copy a snippet's share code.
+Save reusable text and insert it into user-selected webpage fields, with a
+local library of field-specific and global snippets.
 
-Open ClipJect and choose Select a field to get started. Password fields are excluded. Saved snippets stay on your device; ClipJect does not send them to a server.
+## Permission justifications
 
-Support contact: pending publisher details.
+Paste each explanation into its corresponding dashboard field.
 
-## Graphics & assets
+| Permission | Justification |
+| --- | --- |
+| storage | Save snippets, labels, timestamps, selected-field identifiers, associated page details, and appearance/enabled preferences in local browser storage. This provides the snippet library without a server or cloud synchronization. |
+| activeTab | Access the active tab after the user invokes ClipJect from the toolbar so they can choose which field to use with snippets. This supports explicit field selection on the page they are using. |
+| scripting | Inject ClipJect's packaged content script into the active tab when field selection is requested and the already-open page does not yet have a responding content script. Only bundled extension code is injected. |
+| Site access / content-script match on all URLs | Recognize previously selected text fields and show their saved snippets across websites chosen by the user, including after reloads. Restricting this to a fixed domain would prevent the cross-site snippet feature. The picker opens only for registered fields or fields with snippets; password fields are excluded. Page/field metadata is processed locally. |
 
-| Asset             | Status                    | Location                                                                  |
-| ----------------- | ------------------------- | ------------------------------------------------------------------------- |
-| 128 × 128 icon    | Existing                  | public/icons/icon128.png                                                  |
-| Toolbar icons     | Existing                  | public/icons/icon16.png, public/icons/icon48.png                          |
-| Store screenshots | Refresh before submission | Show the revised popup, picker, library, and settings at store dimensions |
-| Promotional tiles | Not prepared              | —                                                                         |
+Broad site access comes from content-script matches, not a separate
+`host_permissions` field. Explain it if the dashboard groups it under host
+permissions. No tabs, clipboard-read, or history permission is requested.
 
-Local verification captures are in the ignored .tmp-ui directory. These are review artifacts, not prepared store uploads.
+## Remote code
 
-## Permissions justification
+Select **No, I am not using remote code.** All JavaScript, CSS, and fonts ship
+inside the package. Dynamic imports load packaged extension assets only.
 
-| Permission or match            | Purpose                                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
-| storage                        | Keep snippets, selected fields, and preferences on the user's device.                 |
-| activeTab                      | Access the current page when the user invokes ClipJect to select a field.             |
-| scripting                      | Start field selection on an already-open page when its content script is unavailable. |
-| Content-script match: all URLs | Make saved snippets available on user-selected fields across websites.                |
+## Privacy disclosures
 
-This UI update adds no permissions, remote assets, or network services.
+Disclose **Website content** (explicitly saved form text and field identifiers)
+and **Web history** (associated page origin, path, and title used for matching
+selected fields, not a general history log). These are processed locally and
+are not uploaded. Do not select a blanket no-user-data answer simply because
+the extension is offline: Chrome's policy covers local processing and storage.
 
-## Privacy & data use
+Users can save arbitrary text containing personal information, health or
+financial information, communications, addresses, or other sensitive details.
+ClipJect does not separately extract these categories, read credentials,
+track geolocation, record keystrokes, or monitor clicks for analytics.
+If the dashboard asks about categories users may explicitly provide, include
+the relevant categories and retain this local-use explanation.
 
-The extension stores text the user explicitly saves, labels, timestamps, selected-field identifiers, and associated page origin, path, and title locally. User-entered text may contain personal or sensitive information. It does not upload this data or include analytics. Export writes a local backup; Share copies a code to the clipboard only after an explicit action. Delete all data removes snippets and selected fields while keeping appearance and enabled preferences.
+The implementation supports all three limited-use certifications:
 
-Store disclosure answers and publisher certification must be finalized by the publisher before submission.
+- User data is not sold to third parties.
+- User data is not used or transferred for purposes unrelated to ClipJect's
+  single purpose.
+- User data is not used or transferred for creditworthiness or lending.
 
-## Privacy policy
+Read and check the actual certifications in the dashboard. Full retention,
+copy/export, website insertion, and deletion details are in [PRIVACY.md](PRIVACY.md).
 
-Public policy URL: not provided. Required before submission.
+## Privacy policy URL
 
-## Distribution & developer info
+The approved policy is in this release and will be public on this repository's
+main branch after the approved push:
 
-Publisher name, public support contact, homepage, visibility, and distribution regions: not configured in this draft.
+`https://github.com/HitBox38/clipject/blob/main/PRIVACY.md`
+
+Verify the policy URL opens while signed out after the push. The support URL
+responded publicly during preparation.
+
+## Images
+
+All files are in `store/assets/`. Numbered screenshots are 1280 × 800 PNGs
+captured from the real extension using sample content, without browser chrome.
+
+| Dashboard slot | File |
+| --- | --- |
+| Icon, 128 × 128 | `icon-128.png` |
+| Screenshot 1 | `01-snippet-picker-1280x800.png` |
+| Screenshot 2 | `02-global-library-1280x800.png` |
+| Screenshot 3 | `03-field-library-1280x800.png` |
+| Screenshot 4 | `04-dark-library-1280x800.png` |
+| Small promotional tile, 440 × 280 | `promo-small-440x280.png` |
+| Optional marquee, 1400 × 560 | `promo-marquee-1400x560.png` |
+
+Use `store/reviewer-notes.txt` for test instructions if a field is offered.
+Do not upload the source archive as the Chrome extension package.
 
 ## Version history
 
-| Version            | Date       | Changes                                                                                                                                 | Status                                       |
-| ------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| 0.1.0 working tree | 2026-09-23 | Refresh all UI surfaces; compact table-style library, direct copy, library search, expanded previews, save feedback, responsive layout, and keyboard fixes. | Unreleased draft; manifest version unchanged |
+| Version | Date | Changes | Status |
+| --- | --- | --- | --- |
+| 1.0.0 | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
-## Review notes
+If 1.0.0 already exists in your dashboard, increment both `manifest.json` and
+`package.json` and rebuild before uploading.
 
-Browser-controlled pages do not permit field selection. Complex contenteditable editors are outside the supported field set. Firefox validation and store submission are not part of this change.
+Requirements checked against the official
+[listing guide](https://developer.chrome.com/docs/webstore/cws-dashboard-listing),
+[privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy),
+and [local-data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq).
