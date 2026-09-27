@@ -5,15 +5,29 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const ts = require("typescript");
 
+async function main() {
 const executable = process.env.CLIPJECT_TEST_BROWSER;
 assert.ok(executable, "Set CLIPJECT_TEST_BROWSER to a Chrome executable");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clipject-paste-"));
-const source = fs.readFileSync(path.join(__dirname, "../src/lib/paste.ts"), "utf8");
-const code = ts.transpileModule(source.replace("export const", "const"), {
-  compilerOptions: { target: ts.ScriptTarget.ES2022 },
-}).outputText;
+const { build } = await import("vite");
+const bundle = await build({
+  configFile: false,
+  logLevel: "silent",
+  resolve: { alias: { "@": path.resolve(__dirname, "../src") } },
+  build: {
+    write: false,
+    minify: false,
+    lib: {
+      entry: path.resolve(__dirname, "../src/lib/paste.ts"),
+      name: "ClipjectPasteTest",
+      formats: ["iife"],
+    },
+  },
+});
+const output = Array.isArray(bundle) ? bundle[0].output : bundle.output;
+const code = output.find((entry) => entry.type === "chunk").code +
+  "\nconst setNativeValue = ClipjectPasteTest.setNativeValue;";
 
 const scenarios = () => {
   const results = [];
@@ -98,3 +112,6 @@ try {
 } finally {
   fs.rmSync(dir, { recursive: true, force: true });
 }
+
+}
+void main();
