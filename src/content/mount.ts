@@ -2,7 +2,7 @@
  * Creates and manages the Shadow DOM host for the ClipJect picker.
  *
  * The picker lives inside a shadow root attached to a <div> appended to
- * document.body.  This isolates our styles from the host page (and vice versa).
+ * the page or the target field’s modal. The shadow root isolates picker styles.
  */
 
 import { createRoot, type Root } from "react-dom/client";
@@ -11,6 +11,7 @@ import { Picker } from "./picker";
 import type { PickerProps } from "./picker/types";
 import { PICKER_Z_INDEX } from "@/lib/constants";
 import { initPickerTheme } from "./theme-bridge";
+import { placeOverlay } from "./overlay-layer";
 
 // Vite resolves these to hashed asset URLs at build time.
 // In the crxjs content-script context they become chrome-extension:// URLs.
@@ -23,6 +24,7 @@ let shadowHost: HTMLDivElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
 let reactRoot: Root | null = null;
 let cleanupTheme: (() => void) | null = null;
+let cleanupLayer: (() => void) | null = null;
 
 const injectStyles = (shadow: ShadowRoot): void => {
   const style = document.createElement("style");
@@ -30,7 +32,9 @@ const injectStyles = (shadow: ShadowRoot): void => {
   shadow.appendChild(style);
 };
 
-const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
+const ensureHost = (
+  props: PickerProps,
+): { shadow: ShadowRoot; container: HTMLDivElement } => {
   if (shadowHost && shadowRoot) {
     const container = shadowRoot.querySelector(
       "#clipject-root",
@@ -48,6 +52,7 @@ const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
   shadowHost.style.overflow = "visible";
   shadowHost.style.zIndex = String(PICKER_Z_INDEX);
   shadowHost.style.pointerEvents = "none";
+  shadowHost.style.background = "transparent";
 
   shadowRoot = shadowHost.attachShadow({ mode: "open" });
 
@@ -57,7 +62,7 @@ const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
   container.id = "clipject-root";
   shadowRoot.appendChild(container);
 
-  document.body.appendChild(shadowHost);
+  cleanupLayer = placeOverlay(shadowHost, props.inputEl, props.onClose);
 
   // Theme tracking: toggle .dark on the container inside the shadow root.
   cleanupTheme = initPickerTheme(container);
@@ -66,7 +71,7 @@ const ensureHost = (): { shadow: ShadowRoot; container: HTMLDivElement } => {
 };
 
 export const mountPicker = (props: PickerProps): void => {
-  const { container } = ensureHost();
+  const { container } = ensureHost(props);
 
   if (reactRoot) {
     reactRoot.render(createElement(Picker, props));
@@ -78,6 +83,8 @@ export const mountPicker = (props: PickerProps): void => {
 };
 
 export const unmountPicker = (): void => {
+  cleanupLayer?.();
+  cleanupLayer = null;
   if (reactRoot) {
     reactRoot.unmount();
     reactRoot = null;
