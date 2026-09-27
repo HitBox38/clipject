@@ -1,3 +1,5 @@
+import { isSupportedField } from "./keys";
+
 /**
  * Programmatically set a value on an input/textarea and dispatch events
  * so that React, Vue, Angular, and vanilla JS listeners all detect the change.
@@ -10,6 +12,9 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
  * synthetic value property) then dispatches `input` and `change` events.
  */
 export const setNativeValue = (el: SupportedElement, value: string): void => {
+  // Page scripts may lock a field after the picker has already opened.
+  if (!el.isConnected || !isSupportedField(el)) return;
+
   // 1. Locate the native setter on the prototype chain.
   //    React overwrites `.value` on the instance, so we need the original.
   const descriptor =

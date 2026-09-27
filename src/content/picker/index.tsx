@@ -11,6 +11,7 @@ import { AddSnippetForm } from "./components/add-snippet-form";
 import { SearchInput } from "./components/search-input";
 import { ResizeHandle } from "./components/resize-handle";
 import { setNativeValue } from "@/lib/paste";
+import { isSupportedField } from "@/lib/keys";
 import {
   createSnippet,
   saveGlobalSnippet,
@@ -58,6 +59,10 @@ export const Picker = ({
 
   const handleSelect = useCallback(
     (item: SnippetItemData) => {
+      if (!inputEl.isConnected || !isSupportedField(inputEl)) {
+        onClose();
+        return;
+      }
       setNativeValue(inputEl, item.snippet.value);
       onClose();
       inputEl.focus();

@@ -143,9 +143,18 @@ export const isPasswordField = (el: Element): boolean => {
 }
 
 /**
- * Returns `true` when the element is a supported input or textarea.
+ * Returns `true` when the element is a supported, editable input or textarea.
  */
 export const isSupportedField = (el: Element): el is SupportedElement => {
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) {
+    return false;
+  }
+
+  // :disabled includes inherited fieldset state and its first-legend exception.
+  if (el.readOnly || el.matches(":disabled") || el.closest("[inert]")) {
+    return false;
+  }
+
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {
     const unsupported = new Set([
