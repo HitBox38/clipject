@@ -93,7 +93,7 @@ for (const Field of [Input, Textarea]) {
         stopPropagation() {},
       });
       assert.equal(registrations, 0);
-      setNativeValue(field, "Snippet text");
+      assert.match(setNativeValue(field, "Snippet text"), /editable field/);
       assert.equal(field.value, "Original text");
       assert.deepEqual(field.events, []);
     });
@@ -104,7 +104,10 @@ test("editable fields still receive the snippet and input/change events", () => 
   const load = createLoader({}, globals);
   for (const Field of [Input, Textarea]) {
     const field = new Field();
-    load("src/lib/paste.ts").setNativeValue(field, "Snippet text");
+    assert.equal(
+      load("src/lib/paste.ts").setNativeValue(field, "Snippet text"),
+      null,
+    );
     assert.equal(field.value, "Snippet text");
     assert.deepEqual(field.events, ["input", "change"]);
   }
@@ -114,14 +117,19 @@ for (const [name, lock] of [
   ...locks,
   ["detached", (field) => (field.isConnected = false)],
 ]) {
-  test(`picker closes without inserting when its target becomes ${name}`, () => {
+  test(`picker keeps open with feedback for a ${name} target`, () => {
     let onSelect;
     let closeCalls = 0;
+    let stateIndex = 0;
+    const feedback = [];
     const load = createLoader(
       {
         react: {
           ...React,
-          useState: (value) => [value, () => {}],
+          useState: (value) => {
+            const index = stateIndex++;
+            return [value, (next) => index === 1 && feedback.push(next)];
+          },
           useRef: () => ({ current: null }),
           useMemo: (fn) => fn(),
           useCallback: (fn) => fn,
@@ -156,6 +164,10 @@ for (const [name, lock] of [
     assert.equal(field.value, "Original text");
     assert.deepEqual(field.events, []);
     assert.equal(field.focusCalls, 0);
-    assert.equal(closeCalls, 1);
+    assert.equal(closeCalls, 0);
+    assert.match(
+      feedback.at(-1),
+      name === "detached" ? /select a field again/ : /editable field/,
+    );
   });
 }

@@ -10,10 +10,25 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 /**
  * Set `value` on `el` using the native prototype setter (bypasses React's
  * synthetic value property) then dispatches `input` and `change` events.
+ * Returns actionable feedback if the target is no longer editable.
  */
-export const setNativeValue = (el: SupportedElement, value: string): void => {
-  // Page scripts may lock a field after the picker has already opened.
-  if (!el.isConnected || !isSupportedField(el)) return;
+export const setNativeValue = (
+  el: SupportedElement,
+  value: string,
+): string | null => {
+  // Page scripts may lock or remove a field after the picker has opened.
+  if (!el.isConnected) {
+    return (
+      "This field is no longer on the page. " +
+      "Close this picker and select a field again."
+    );
+  }
+  if (!isSupportedField(el)) {
+    return (
+      "This field is no longer editable. " +
+      "Choose an editable field and try again."
+    );
+  }
 
   // 1. Locate the native setter on the prototype chain.
   //    React overwrites `.value` on the instance, so we need the original.
@@ -43,4 +58,5 @@ export const setNativeValue = (el: SupportedElement, value: string): void => {
 
   // 3. Dispatch `change` (form libraries that only listen on change).
   el.dispatchEvent(new Event("change", { bubbles: true }));
+  return null;
 }
