@@ -58,7 +58,11 @@ export const Picker = ({
 
   const handleSelect = useCallback(
     (item: SnippetItemData) => {
-      setNativeValue(inputEl, item.snippet.value);
+      const error = setNativeValue(inputEl, item.snippet.value);
+      if (error) {
+        setFeedback(error);
+        return;
+      }
       onClose();
       inputEl.focus();
     },

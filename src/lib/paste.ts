@@ -8,8 +8,30 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 /**
  * Set `value` on `el` using the native prototype setter (bypasses React's
  * synthetic value property) then dispatches `input` and `change` events.
+ * Returns an actionable error without changing the field when text is too long.
  */
-export const setNativeValue = (el: SupportedElement, value: string): void => {
+export const setNativeValue = (
+  el: SupportedElement,
+  value: string,
+): string | null => {
+  const supportsMaxLength =
+    el instanceof HTMLTextAreaElement ||
+    ["text", "search", "url", "tel", "email", "password"].includes(el.type);
+  const limit = el.maxLength;
+  if (supportsMaxLength && limit >= 0) {
+    // Let the browser normalize newlines and type-specific whitespace on a
+    // detached copy. The live field and its events remain untouched on failure.
+    const candidate = el.cloneNode(false) as SupportedElement;
+    candidate.value = value;
+    // Native maxlength uses UTF-16 code units, which String.length also counts.
+    if (candidate.value.length > limit) {
+      return (
+        `This snippet exceeds this field's ${limit}-character limit. ` +
+        "Choose a shorter snippet or edit it in the library."
+      );
+    }
+  }
+
   // 1. Locate the native setter on the prototype chain.
   //    React overwrites `.value` on the instance, so we need the original.
   const descriptor =
@@ -38,4 +60,5 @@ export const setNativeValue = (el: SupportedElement, value: string): void => {
 
   // 3. Dispatch `change` (form libraries that only listen on change).
   el.dispatchEvent(new Event("change", { bubbles: true }));
+  return null;
 }
