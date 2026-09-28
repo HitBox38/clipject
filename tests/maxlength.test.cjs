@@ -13,6 +13,16 @@ class Field {
     this.events = [];
     this.writes = 0;
     this.focusCalls = 0;
+    this.isConnected = true;
+    this.ownerDocument = {
+      activeElement: null,
+      execCommand: (command, showUI, value) => {
+        assert.equal(command, "insertText");
+        assert.equal(showUI, false);
+        this.value = value;
+        return true;
+      },
+    };
   }
   get value() {
     return this.currentValue;
@@ -39,7 +49,23 @@ class Field {
   }
   focus() {
     this.focusCalls++;
+    this.ownerDocument.activeElement = this;
   }
+  matches(selector) {
+    assert.equal(selector, ":disabled");
+    return false;
+  }
+  closest(selector) {
+    assert.equal(selector, "[inert]");
+    return null;
+  }
+  select() {}
+  getRootNode() {
+    return this.ownerDocument;
+  }
+  setSelectionRange() {}
+  removeEventListener() {}
+  addEventListener() {}
 }
 class Input extends Field {}
 class Textarea extends Field {}
@@ -151,5 +177,5 @@ test("picker reads the latest limit and keeps draft and picker after rejection",
   onSelect({ snippet: { value: "Snippet text" } });
   assert.equal(field.value, "Snippet text");
   assert.equal(closed, 1);
-  assert.equal(field.focusCalls, 1);
+  assert.equal(field.focusCalls, 2);
 });
