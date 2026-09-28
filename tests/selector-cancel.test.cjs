@@ -37,6 +37,12 @@ test("banner Cancel click reaches its handler while page clicks remain blocked",
         isPasswordField: () => false,
       },
       "@/lib/storage": {},
+      "./overlay-layer": {
+        placeOverlay: (overlay) => {
+          document.body.appendChild(overlay);
+          return () => {};
+        },
+      },
     },
     { document, HTMLElement: Element },
   );
