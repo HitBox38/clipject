@@ -1,11 +1,12 @@
 # CI and releases
 
-PRs run the **CI / Tests, lint, and builds** check: frozen pnpm install, every
-Node regression test, headless Chrome paste and modal-overlay regressions,
-ESLint, TypeScript checking, Chrome and Firefox production
-builds, and validation of the store packages. PR jobs have read-only repository
-access and no publishing secrets. Make this check required in the branch rules
-for `master` if merges should be blocked on failures.
+PRs run **CI / Tests, lint, and builds**, an aggregate of independent jobs for
+lint, strict application/test typechecking, Vitest coverage, Playwright Chromium
+extension regressions, and validated Chrome/Firefox store packages. The same
+checks run on pushes to `dev` and `master`. PR jobs have read-only repository
+access and no publishing secrets. The existing aggregate check name is retained
+for branch rules. See [TESTING.md](../TESTING.md) for local commands, test layout,
+coverage gates, and browser failure reports.
 
 Every push to `master` runs **Release**. This is the repository's current default
 branch. If it is renamed to `main`, update the branch filter in

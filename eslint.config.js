@@ -6,7 +6,17 @@ import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", ".tmp-ui"]),
+  globalIgnores([
+    "dist",
+    "dist-firefox",
+    "release",
+    ".tmp-ui",
+    ".pnpm-store",
+    "qa-evidence",
+    "coverage",
+    "playwright-report",
+    "test-results",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -19,6 +29,14 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+  },
+  {
+    files: ["tests/e2e/**/*.ts"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
+  {
+    files: ["tests/**/*.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
   },
   {
     files: ["src/components/ui/**/*.{ts,tsx}"],

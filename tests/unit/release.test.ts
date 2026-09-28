@@ -3,14 +3,14 @@ import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { test } from "node:test";
+import { test, type TestContext } from "vitest";
 import {
   compareVersions,
   releaseVersion,
   stampVersion,
-} from "../scripts/release-version.mjs";
-import { publishChrome } from "../scripts/chrome-web-store.mjs";
-import { publishRelease } from "../scripts/publish-release.mjs";
+} from "../../scripts/release-version.mjs";
+import { publishChrome } from "../../scripts/chrome-web-store.mjs";
+import { publishRelease } from "../../scripts/publish-release.mjs";
 
 const env = {
   RELEASE_VERSION: "1.0.7",
@@ -23,29 +23,39 @@ const env = {
   CWS_CLIENT_SECRET: "secret",
   CWS_REFRESH_TOKEN: "refresh",
 };
-const reply = (data, status = 200) =>
+const reply = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status });
-const revision = (version, state) => ({
+const revision = (version: string, state: string) => ({
   state,
   distributionChannels: [{ crxVersion: version }],
 });
-function sequence(steps) {
-  const calls = [];
+type Step = [string, unknown, number?];
+function sequence(steps: Step[]) {
+  const calls: Array<RequestInit & { url: string }> = [];
   return {
     calls,
-    fetcher: async (url, options = {}) => {
+    fetcher: async (
+      request: string | URL | Request,
+      options: RequestInit = {},
+    ) => {
+      const url =
+        typeof request === "string"
+          ? request
+          : request instanceof URL
+            ? request.href
+            : request.url;
       calls.push({ url, ...options });
       assert(steps.length > 0, `Unexpected request: ${url}`);
-      const [suffix, data, status] = steps.shift();
+      const [suffix, data, status] = steps.shift()!;
       assert(url.endsWith(suffix), `${url} should end with ${suffix}`);
       return reply(data, status);
     },
     done: () => assert.equal(steps.length, 0),
   };
 }
-async function temporary(t) {
+async function temporary(t: TestContext) {
   const root = await mkdtemp(path.join(tmpdir(), "clipject-ci-"));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  t.onTestFinished(() => rm(root, { recursive: true, force: true }));
   return root;
 }
 
@@ -73,7 +83,7 @@ test("stamping synchronizes package and manifest without changing metadata", asy
   }
   assert.equal(await stampVersion(root, "7"), "1.0.7");
   for (const file of ["package.json", "manifest.json"]) {
-    assert.deepEqual(JSON.parse(await readFile(`${root}/${file}`)), {
+    assert.deepEqual(JSON.parse(await readFile(`${root}/${file}`, "utf8")), {
       version: "1.0.7",
       name: "ClipJect",
     });
@@ -90,21 +100,24 @@ test("Chrome upload waits for processing before submitting for automatic publica
     [":fetchStatus", { lastAsyncUploadState: "SUCCEEDED" }],
     [":publish", { state: "PENDING_REVIEW" }],
   ]);
-  const sleeps = [];
+  const sleeps: number[] = [];
   assert.equal(
     await publishChrome({
+      archive: Buffer.from("zip"),
       env,
       version: "1.0.7",
-      archive: Buffer.from("zip"),
       fetcher: mock.fetcher,
-      sleep: async (ms) => sleeps.push(ms),
+      sleep: async <T = void>(ms = 0, value?: T) => {
+        sleeps.push(ms);
+        return value as T;
+      },
     }),
     "PENDING_REVIEW",
   );
   assert.deepEqual(sleeps, [10000]);
   assert.equal(mock.calls[2].method, "POST");
   assert(mock.calls[2].url.includes("/upload/v2/"));
-  assert.deepEqual(JSON.parse(mock.calls[4].body), {
+  assert.deepEqual(JSON.parse(String(mock.calls[4].body)), {
     publishType: "DEFAULT_PUBLISH",
   });
   mock.done();
@@ -120,7 +133,12 @@ for (const state of ["PENDING_REVIEW", "PUBLISHED"]) {
       ],
     ]);
     assert.equal(
-      await publishChrome({ env, version: "1.0.7", fetcher: mock.fetcher }),
+      await publishChrome({
+        archive: Buffer.from("zip"),
+        env,
+        version: "1.0.7",
+        fetcher: mock.fetcher,
+      }),
       state,
     );
     mock.done();
@@ -137,14 +155,19 @@ for (const [status, message] of [
     { publishedItemRevisionStatus: revision("1.0.10", "PUBLISHED") },
     /newer version/,
   ],
-]) {
+] as const) {
   test(`Chrome blocks unsafe uploads: ${message}`, async () => {
     const mock = sequence([
       ["/token", { access_token: "token" }],
       [":fetchStatus", status],
     ]);
     await assert.rejects(
-      publishChrome({ env, version: "1.0.7", fetcher: mock.fetcher }),
+      publishChrome({
+        archive: Buffer.from("zip"),
+        env,
+        version: "1.0.7",
+        fetcher: mock.fetcher,
+      }),
       message,
     );
     mock.done();
@@ -153,7 +176,7 @@ for (const [status, message] of [
 
 test("failed uploads and rejected publish responses fail the release", async () => {
   for (const failedUpload of [true, false]) {
-    const steps = [
+    const steps: Step[] = [
       ["/token", { access_token: "token" }],
       [":fetchStatus", {}],
       [
@@ -167,7 +190,12 @@ test("failed uploads and rejected publish responses fail the release", async () 
     if (!failedUpload) steps.push([":publish", { state: "REJECTED" }]);
     const mock = sequence(steps);
     await assert.rejects(
-      publishChrome({ env, version: "1.0.7", fetcher: mock.fetcher }),
+      publishChrome({
+        archive: Buffer.from("zip"),
+        env,
+        version: "1.0.7",
+        fetcher: mock.fetcher,
+      }),
       failedUpload ? /did not succeed/ : /Unexpected publish state/,
     );
     mock.done();
@@ -175,11 +203,11 @@ test("failed uploads and rejected publish responses fail the release", async () 
 });
 
 test("asynchronous upload polling has a deadline", async () => {
-  const steps = [
+  const steps: Step[] = [
     ["/token", { access_token: "token" }],
     [":fetchStatus", {}],
     [":upload", { uploadState: "IN_PROGRESS" }],
-    ...Array.from({ length: 30 }, () => [
+    ...Array.from({ length: 30 }, (): Step => [
       ":fetchStatus",
       { lastAsyncUploadState: "IN_PROGRESS" },
     ]),
@@ -187,10 +215,14 @@ test("asynchronous upload polling has a deadline", async () => {
   const mock = sequence(steps);
   await assert.rejects(
     publishChrome({
+      archive: Buffer.from("zip"),
       env,
       version: "1.0.7",
       fetcher: mock.fetcher,
-      sleep: async () => {},
+      sleep: async <T = void>(ms = 0, value?: T) => {
+        void ms;
+        return value as T;
+      },
     }),
     /did not succeed/,
   );
@@ -200,15 +232,16 @@ test("asynchronous upload polling has a deadline", async () => {
 test("OAuth failures do not expose response credentials", async () => {
   await assert.rejects(
     publishChrome({
+      archive: Buffer.from("zip"),
       env,
       version: "1.0.7",
       fetcher: async () => reply({ secret: "do-not-log" }, 401),
     }),
-    (error) =>
+    (error: Error) =>
       /HTTP 401/.test(error.message) && !error.message.includes("do-not-log"),
   );
   await assert.rejects(
-    publishChrome({ env: {}, version: "1.0.7" }),
+    publishChrome({ archive: Buffer.from("zip"), env: {}, version: "1.0.7" }),
     /Missing CWS_PUBLISHER_ID/,
   );
 });
@@ -246,9 +279,12 @@ test("release retries reuse draft assets and finish after an accepted Chrome sub
     ],
   ]);
   await publishRelease({ env, directory: root, fetcher: mock.fetcher });
-  assert.equal(mock.calls.at(-1).method, "PATCH");
-  assert.equal(JSON.parse(mock.calls.at(-1).body).draft, false);
-  assert.match(JSON.parse(mock.calls.at(-1).body).body, /Generated notes/);
+  assert.equal(mock.calls.at(-1)!.method, "PATCH");
+  assert.equal(JSON.parse(String(mock.calls.at(-1)!.body)).draft, false);
+  assert.match(
+    JSON.parse(String(mock.calls.at(-1)!.body)).body,
+    /Generated notes/,
+  );
   mock.done();
 
   assets[0].digest = "sha256:changed";
@@ -285,7 +321,7 @@ test("new releases upload assets and remain drafts if Chrome fails", async (t) =
     publishRelease({ env, directory: root, fetcher: mock.fetcher }),
     /HTTP 401/,
   );
-  const creation = JSON.parse(mock.calls[3].body);
+  const creation = JSON.parse(String(mock.calls[3].body));
   assert.equal(creation.draft, true);
   assert.equal(creation.target_commitish, env.GITHUB_SHA);
   assert.equal(creation.generate_release_notes, true);

@@ -34,10 +34,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
       - name: Browser regressions
         run: |
-          export CLIPJECT_TEST_BROWSER="$(command -v google-chrome)"
+          pnpm exec playwright install --with-deps chromium
           pnpm run test:browser
       - run: pnpm run lint
       - name: Generate version

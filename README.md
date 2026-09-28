@@ -173,14 +173,14 @@ refresh. Use a production build for an installation independent of the dev serve
 ### Verification
 
 ```sh
-pnpm run build
-pnpm run lint
-pnpm test
+pnpm exec playwright install chromium
+pnpm check
 ```
 
-Regression tests use Node's built-in test runner, TypeScript transpilation, and
-mocked extension/DOM contexts. Release tests mock the Google and GitHub APIs.
-These tests do not replace checks in a real browser.
+Regression tests use strict TypeScript, Vitest, and React Testing Library.
+Playwright verifies the built extension and native editing in isolated Chromium
+profiles. Release tests mock the Google and GitHub APIs. See [TESTING.md](TESTING.md)
+for focused commands, coverage gates, and failure reports.
 
 For a manual smoke test, register a field on a basic form, save both snippet
 scopes, paste into a framework-controlled field, test search and keyboard
@@ -193,9 +193,9 @@ or replace loading the unpacked extension.
 
 ### CI and automatic releases
 
-PRs run all Node tests, headless Chrome regressions, lint, TypeScript checks,
-both browser builds, and package validation. Run the browser regressions locally
-with `CLIPJECT_TEST_BROWSER=/path/to/chrome pnpm run test:browser`.
+PRs run Vitest coverage, Playwright browser regressions, lint, strict TypeScript
+checks, both browser builds, and package validation. The same checks run on pushes
+to `dev` and `master`. Run browser regressions locally with `pnpm test:e2e`.
 Pushes to `master` generate a new version, submit the Chrome update, and publish
 a GitHub release with downloadable packages and generated notes.
 Chrome availability follows Google's review. See [CI setup](docs/ci.md) for the
@@ -207,8 +207,7 @@ The stack is Vite 8 with CRXJS, TypeScript 6, React 19, Tailwind CSS 4, shadcn/u
 components, and Zustand. Zustand manages UI state; extension storage provides
 persistence across browser contexts.
 
-TypeScript stays on the 6.0 release line because the test helpers and
-`typescript-eslint` use its compiler API. Node type definitions stay on version
+TypeScript stays on the 6.0 release line alongside `typescript-eslint`. Node type definitions stay on version
 24 to match the recommended runtime. Updating the shadcn package does not
 regenerate the locally maintained components in `src/components/ui/`.
 
