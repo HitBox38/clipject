@@ -139,7 +139,7 @@ for (const [browser, directory] of [["chrome", "dist"], ["firefox", "dist-firefo
 // Explicit allowlist: no personal data, credentials, workspace profiles, caches,
 // agent instructions, .git, node_modules, or built output enters the source ZIP.
 const source = [];
-for (const name of ["src", "public", "scripts", "tests", "store", "package.json",
+for (const name of ["src", "public", "scripts", "tests", "store", "docs", "package.json",
   "pnpm-lock.yaml", "pnpm-workspace.yaml", "manifest.json", "vite.config.ts",
   "tsconfig.json", "tsconfig.app.json", "tsconfig.node.json", "eslint.config.js",
   "components.json", "index.html", "LICENSE", "README.md", "BUILDING.md",

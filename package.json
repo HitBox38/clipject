@@ -10,6 +10,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
+    "test:browser": "node tests/paste-browser.cjs && node tests/modal-overlay-browser.cjs",
     "build": "tsc -b && vite build",
     "build:firefox": "tsc -b && vite build --mode firefox",
     "release": "pnpm run build && pnpm run build:firefox && node scripts/package-release.mjs",

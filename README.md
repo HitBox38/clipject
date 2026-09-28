@@ -35,8 +35,8 @@ See the [submission kit](store/README.md) for packages, images, and listing copy
 ## Current project status
 
 The initial review fixes and clone-title integration fix have been merged.
-The regression suite contains 28 tests, including cloning across extension
-contexts and rejecting occupied clone destinations.
+The regression suite covers extension behavior and release automation, including
+cloning across extension contexts and rejecting occupied clone destinations.
 
 ## Using ClipJect
 
@@ -175,12 +175,12 @@ refresh. Use a production build for an installation independent of the dev serve
 ```sh
 pnpm run build
 pnpm run lint
-node --test tests/*.test.cjs
+pnpm test
 ```
 
 Regression tests use Node's built-in test runner, TypeScript transpilation, and
-mocked extension/DOM contexts. There is no `pnpm test` script. These tests do not
-replace checks in a real browser.
+mocked extension/DOM contexts. Release tests mock the Google and GitHub APIs.
+These tests do not replace checks in a real browser.
 
 For a manual smoke test, register a field on a basic form, save both snippet
 scopes, paste into a framework-controlled field, test search and keyboard
@@ -190,6 +190,16 @@ backup import/export.
 
 `pnpm run preview` serves built assets; it does not simulate the extension runtime
 or replace loading the unpacked extension.
+
+### CI and automatic releases
+
+PRs run all Node tests, headless Chrome regressions, lint, TypeScript checks,
+both browser builds, and package validation. Run the browser regressions locally
+with `CLIPJECT_TEST_BROWSER=/path/to/chrome pnpm run test:browser`.
+Pushes to `master` generate a new version, submit the Chrome update, and publish
+a GitHub release with downloadable packages and generated notes.
+Chrome availability follows Google's review. See [CI setup](docs/ci.md) for the
+required publishing credentials, version scheme, and retry instructions.
 
 ## Architecture
 
