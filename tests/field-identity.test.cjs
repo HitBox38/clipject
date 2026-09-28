@@ -24,6 +24,14 @@ function fixture() {
       this.children = [];
       parent?.children.push(this);
     }
+    matches(selector) {
+      assert.equal(selector, ":disabled");
+      return false;
+    }
+    closest(selector) {
+      assert.equal(selector, "[inert]");
+      return null;
+    }
     getAttribute(key) {
       return this.attrs[key] ?? null;
     }

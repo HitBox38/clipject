@@ -34,6 +34,56 @@ const scenarios = () => {
   const check = (condition, message) => {
     if (!condition) throw new Error(message);
   };
+  for (const phase of ["before", "focus", "select"]) {
+    for (const lock of ["readonly", "disabled", "fieldset", "inert", "detached"]) {
+      const container = document.createElement("fieldset");
+      const field = document.createElement("textarea");
+      field.value = "Keep locked draft";
+      container.append(field);
+      document.body.append(container);
+      let edits = 0;
+      for (const event of ["input", "change"]) {
+        field.addEventListener(event, () => edits++);
+      }
+      const applyLock = () => {
+        if (lock === "readonly") field.readOnly = true;
+        if (lock === "disabled") field.disabled = true;
+        if (lock === "fieldset") container.disabled = true;
+        if (lock === "inert") container.inert = true;
+        if (lock === "detached") field.remove();
+      };
+      if (phase === "before") applyLock();
+      if (phase === "focus") {
+        // Headless dump-dom can run before the document gains window focus.
+        // Inject the synchronous mutation at the native focus call boundary.
+        const nativeFocus = field.focus;
+        field.focus = (...args) => { nativeFocus.apply(field, args); applyLock(); };
+      }
+      if (phase === "select") {
+        const nativeSelect = field.select;
+        field.select = () => { nativeSelect.call(field); applyLock(); };
+      }
+      const lockError = setNativeValue(field, "Must not insert");
+      check(typeof lockError === "string", phase + ": " + lock + " rejects: " + JSON.stringify({lockError, readOnly: field.readOnly, focused: document.hasFocus()}));
+      check(field.value === "Keep locked draft", phase + ": " + lock + " preserves draft");
+      check(edits === 0, phase + ": " + lock + " emits no edits");
+      container.remove();
+    }
+    results.push(phase + ": readonly, disabled, fieldset, inert, detached guards pass");
+  }
+  const fieldset = document.createElement("fieldset");
+  fieldset.disabled = true;
+  const legend = document.createElement("legend");
+  const legendField = document.createElement("input");
+  legendField.value = "Legend draft";
+  legend.append(legendField);
+  fieldset.append(legend);
+  document.body.append(fieldset);
+  check(setNativeValue(legendField, "Legend snippet") === null, "first legend remains editable");
+  document.execCommand("undo");
+  check(legendField.value === "Legend draft", "first legend preserves Undo");
+  fieldset.remove();
+  results.push("first legend: editable insertion and Undo pass");
   for (const type of ["textarea", "text", "search", "tel", "url", "email", "number"]) {
     const field = document.createElement(type === "textarea" ? "textarea" : "input");
     if (type !== "textarea") field.type = type;

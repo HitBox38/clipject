@@ -1,3 +1,5 @@
+import { isSupportedField } from "./keys";
+
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
 const insertionError = "This field couldn’t accept the snippet with Undo support.";
@@ -12,6 +14,9 @@ export const setNativeValue = (
   el: SupportedElement,
   value: string,
 ): string | null => {
+  const editabilityError = getEditabilityError(el);
+  if (editabilityError) return editabilityError;
+
   const document = el.ownerDocument;
   if (!el.isConnected || typeof document.execCommand !== "function") {
     return insertionError;
@@ -29,6 +34,8 @@ export const setNativeValue = (
   el.addEventListener("input", recordInput, true);
   try {
     el.focus({ preventScroll: true });
+    const focusError = getEditabilityError(el);
+    if (focusError) return focusError;
     // A page may redirect focus, or the field may have become inert/disabled.
     // Never send an editing command to a different field in that case.
     const root = el.getRootNode() as Document | ShadowRoot;
@@ -37,6 +44,9 @@ export const setNativeValue = (
     // select(), unlike setSelectionRange(), also works for Chrome's email and
     // number inputs. Unsupported controls (e.g. dates) reject insertText.
     el.select();
+    // Page focus/select handlers may change editability synchronously.
+    const selectionError = getEditabilityError(el);
+    if (selectionError) return selectionError;
     if (root.activeElement !== el) return insertionError;
     inserted = document.execCommand("insertText", false, value);
   } catch {
@@ -60,5 +70,21 @@ export const setNativeValue = (
     el.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
   }
   el.dispatchEvent(new Event("change", { bubbles: true }));
+  return null;
+};
+
+const getEditabilityError = (el: SupportedElement): string | null => {
+  if (!el.isConnected) {
+    return (
+      "This field is no longer on the page. " +
+      "Close this picker and select a field again."
+    );
+  }
+  if (!isSupportedField(el)) {
+    return (
+      "This field is no longer editable. " +
+      "Choose an editable field and try again."
+    );
+  }
   return null;
 };
