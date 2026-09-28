@@ -3,8 +3,6 @@
 Prepared September 23, 2026 for version 1.0.0. Not submitted or published.
 Start with [the upload guide](store/README.md).
 
-Last updated September 28, 2026.
-
 ## Upload and listing fields
 
 | Dashboard field | Value / file |
@@ -107,7 +105,6 @@ Do not upload the source archive as the Chrome extension package.
 
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
-| Unreleased | 2026-09-28 | Preserve field text when a snippet exceeds its character limit and explain how to choose a shorter snippet. | Pending release |
 | 1.0.0 | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
 If 1.0.0 already exists in your dashboard, increment both `manifest.json` and
