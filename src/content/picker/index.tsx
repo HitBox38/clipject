@@ -71,6 +71,7 @@ export const Picker = ({
 
   const { highlightedIndex, setHighlightedIndex } = usePickerKeyboard({
     enabled: !isAdding,
+    pickerRef,
     items: filteredAll,
     onSelect: handleSelect,
     onClose,
@@ -198,7 +199,7 @@ export const Picker = ({
       )}
       {!isAdding && (
         <p className="clipject-keyboard-hint">
-          ↑ ↓ to browse · Enter to insert · Esc to close
+          Focus search: ↑ ↓ to browse · Enter to insert · Esc to close
         </p>
       )}
       <ResizeHandle onMouseDown={onResizeStart} />

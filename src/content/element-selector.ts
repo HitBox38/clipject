@@ -15,9 +15,11 @@ import {
 } from "@/lib/keys";
 import { addTrackedInput } from "@/lib/storage";
 import { PICKER_Z_INDEX } from "@/lib/constants";
+import { placeOverlay } from "./overlay-layer";
 
 let active = false;
 let banner: HTMLDivElement | null = null;
+let cleanupLayer: (() => void) | null = null;
 let currentHighlight: HTMLElement | null = null;
 
 const HIGHLIGHT_OUTLINE = "2px solid #33a89e";
@@ -113,10 +115,18 @@ const createBanner = (): void => {
   });
   banner.appendChild(cancelBtn);
 
-  document.body.appendChild(banner);
+  cleanupLayer = placeOverlay(
+    banner,
+    document.activeElement,
+    stopElementSelector,
+  );
+  // Keep the banner’s spacing after resetting the browser’s popover defaults.
+  banner.style.padding = "10px 14px";
 };
 
 const removeBanner = (): void => {
+  cleanupLayer?.();
+  cleanupLayer = null;
   if (banner) {
     banner.remove();
     banner = null;

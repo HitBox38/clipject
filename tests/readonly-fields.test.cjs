@@ -29,6 +29,16 @@ class Input extends Element {
     this.value = "Original text";
     this.events = [];
     this.focusCalls = 0;
+    this.isConnected = true;
+    this.ownerDocument = {
+      activeElement: null,
+      execCommand: (command, showUI, value) => {
+        assert.equal(command, "insertText");
+        assert.equal(showUI, false);
+        this.value = value;
+        return true;
+      },
+    };
   }
   matches(selector) {
     assert.equal(selector, ":disabled");
@@ -43,7 +53,18 @@ class Input extends Element {
   }
   focus() {
     this.focusCalls++;
+    this.ownerDocument.activeElement = this;
   }
+  cloneNode(deep) {
+    assert.equal(deep, false);
+    return new this.constructor();
+  }
+  select() {}
+  getRootNode() {
+    return this.ownerDocument;
+  }
+  setSelectionRange() {}
+  removeEventListener() {}
 }
 class Textarea extends Input {}
 const globals = {
@@ -70,6 +91,7 @@ for (const Field of [Input, Textarea]) {
       };
       const load = createLoader(
         {
+          "./overlay-layer": { placeOverlay: () => () => {} },
           "@/lib/storage": {
             addTrackedInput() {
               registrations++;
