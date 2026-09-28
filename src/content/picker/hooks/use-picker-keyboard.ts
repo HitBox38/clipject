@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
 import type { SnippetItemData } from "../types";
 
 interface UsePickerKeyboardOptions {
   enabled?: boolean;
+  pickerRef: RefObject<HTMLDivElement | null>;
   items: SnippetItemData[];
   onSelect: (item: SnippetItemData) => void;
   onClose: () => void;
@@ -10,8 +12,8 @@ interface UsePickerKeyboardOptions {
 
 /**
  * Manages keyboard navigation for the picker list.
- *  - ArrowDown / ArrowUp to move highlight
- *  - Enter to select
+ *  - ArrowDown / ArrowUp in picker search to move highlight
+ *  - Enter in picker search to select
  *  - Escape to close
  *
  * Automatically resets the highlight when the items array changes
@@ -19,6 +21,7 @@ interface UsePickerKeyboardOptions {
  */
 export function usePickerKeyboard({
   enabled = true,
+  pickerRef,
   items,
   onSelect,
   onClose,
@@ -46,10 +49,24 @@ export function usePickerKeyboard({
 
   // A stable handler that reads everything from refs.
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.isComposing) return;
-    // Shadow DOM retargets event.target to the host; inspect the real control.
-    const target = e.composedPath?.()[0] as HTMLElement | undefined;
-    if (e.key !== "Escape" && target?.closest?.("button, select")) return;
+    if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
+    // Opening the picker does not opt the host field into snippet navigation.
+    // Keep its Enter and arrow keys native, including after hovering a snippet.
+    // Shadow DOM retargets event.target, so inspect the original event path.
+    const path = e.composedPath();
+    const target = path[0] as HTMLElement | undefined;
+    if (
+      e.key !== "Escape" &&
+      (!pickerRef.current ||
+        !path.includes(pickerRef.current) ||
+        target?.closest?.("button, select") ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.shiftKey)
+    ) {
+      return;
+    }
     const currentItems = itemsRef.current;
     const len = currentItems.length;
 
@@ -82,7 +99,7 @@ export function usePickerKeyboard({
         onCloseRef.current();
         break;
     }
-  }, []);
+  }, [pickerRef]);
 
   useEffect(() => {
     if (!enabled) return;
