@@ -196,9 +196,9 @@ or replace loading the unpacked extension.
 PRs run Vitest coverage, Playwright browser regressions, lint, formatting, strict TypeScript
 checks, both browser builds, and package validation. The same checks run on pushes
 to `dev` and `master`. Run browser regressions locally with `pnpm test:e2e`.
-Pushes to `master` generate a new version, submit the Chrome update, and publish
+Pushes to `master` generate a new version, submit Chrome and Firefox updates, and publish
 a GitHub release with downloadable packages and generated notes.
-Chrome availability follows Google's review. See [CI setup](docs/ci.md) for the
+Store availability follows Google's and Mozilla's reviews. See [CI setup](docs/ci.md) for the
 required publishing credentials, version scheme, and retry instructions.
 
 ## Architecture

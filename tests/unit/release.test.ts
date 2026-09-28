@@ -22,6 +22,8 @@ const env = {
   CWS_CLIENT_ID: "client",
   CWS_CLIENT_SECRET: "secret",
   CWS_REFRESH_TOKEN: "refresh",
+  AMO_JWT_ISSUER: "user:123:456",
+  AMO_JWT_SECRET: "amo-secret",
 };
 const reply = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status });
@@ -249,7 +251,12 @@ test("OAuth failures do not expose response credentials", async () => {
 test("release retries reuse draft assets and finish after an accepted Chrome submission", async (t) => {
   const root = await temporary(t);
   const assets = [];
-  for (const name of ["clipject-1.0.7-chrome.zip", "SHA256SUMS.txt"]) {
+  for (const name of [
+    "clipject-1.0.7-chrome.zip",
+    "clipject-1.0.7-firefox.zip",
+    "clipject-1.0.7-source.zip",
+    "SHA256SUMS.txt",
+  ]) {
     const data = Buffer.from(name);
     await writeFile(`${root}/${name}`, data);
     assets.push({
@@ -274,6 +281,19 @@ test("release retries reuse draft assets and finish after an accepted Chrome sub
       { submittedItemRevisionStatus: revision("1.0.7", "PENDING_REVIEW") },
     ],
     [
+      "/versions/?filter=all_with_unlisted&page=1",
+      { results: [{ version: "1.0.7" }], next: null },
+    ],
+    [
+      "/versions/1.0.7/",
+      {
+        version: "1.0.7",
+        channel: "listed",
+        file: { status: "unreviewed" },
+        source: "https://example.com/source.zip",
+      },
+    ],
+    [
       "/releases/42",
       { html_url: "https://github.com/owner/repo/releases/tag/v1.0.7" },
     ],
@@ -285,7 +305,28 @@ test("release retries reuse draft assets and finish after an accepted Chrome sub
     JSON.parse(String(mock.calls.at(-1)!.body)).body,
     /Generated notes/,
   );
+  assert.match(
+    JSON.parse(String(mock.calls.at(-1)!.body)).body,
+    /Firefox Add-ons submission: \*\*PENDING_REVIEW\*\*/,
+  );
   mock.done();
+
+  // Chrome already accepted this version, but Firefox failed: retain the draft.
+  const firefoxFailure = sequence([
+    ["/releases/tags/v1.0.7", draft],
+    ["/token", { access_token: "token" }],
+    [
+      ":fetchStatus",
+      { submittedItemRevisionStatus: revision("1.0.7", "PENDING_REVIEW") },
+    ],
+    ["/versions/?filter=all_with_unlisted&page=1", {}, 401],
+  ]);
+  await assert.rejects(
+    publishRelease({ env, directory: root, fetcher: firefoxFailure.fetcher }),
+    /HTTP 401/,
+  );
+  assert(!firefoxFailure.calls.some((call) => call.method === "PATCH"));
+  firefoxFailure.done();
 
   assets[0].digest = "sha256:changed";
   const changed = sequence([["/releases/tags/v1.0.7", draft]]);
@@ -297,7 +338,12 @@ test("release retries reuse draft assets and finish after an accepted Chrome sub
 
 test("new releases upload assets and remain drafts if Chrome fails", async (t) => {
   const root = await temporary(t);
-  for (const name of ["clipject-1.0.7-chrome.zip", "SHA256SUMS.txt"]) {
+  for (const name of [
+    "clipject-1.0.7-chrome.zip",
+    "clipject-1.0.7-firefox.zip",
+    "clipject-1.0.7-source.zip",
+    "SHA256SUMS.txt",
+  ]) {
     await writeFile(`${root}/${name}`, name);
   }
   const mock = sequence([
@@ -315,6 +361,8 @@ test("new releases upload assets and remain drafts if Chrome fails", async (t) =
     ],
     ["?name=SHA256SUMS.txt", {}],
     ["?name=clipject-1.0.7-chrome.zip", {}],
+    ["?name=clipject-1.0.7-firefox.zip", {}],
+    ["?name=clipject-1.0.7-source.zip", {}],
     ["/token", {}, 401],
   ]);
   await assert.rejects(
@@ -350,4 +398,17 @@ test("published releases are idempotent and conflicting commits are rejected", a
     else await assert.rejects(result, /another commit/);
     mock.done();
   }
+});
+
+test("missing Firefox secrets fail before Chrome or GitHub requests", async () => {
+  const mock = sequence([]);
+  await assert.rejects(
+    publishRelease({
+      env: { ...env, AMO_JWT_SECRET: "" },
+      directory: "/unused",
+      fetcher: mock.fetcher,
+    }),
+    /Missing AMO_JWT_SECRET/,
+  );
+  mock.done();
 });

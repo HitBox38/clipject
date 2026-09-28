@@ -55,10 +55,10 @@ jobs:
           overwrite: true
 
   publish:
-    name: Publish Chrome and GitHub release
+    name: Publish Chrome, Firefox, and GitHub release
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     environment: chrome-web-store
     permissions:
       contents: write
@@ -74,7 +74,7 @@ jobs:
         with:
           name: release-${{ github.run_id }}
           path: release/${{ needs.build.outputs.version }}/
-      - name: Submit Chrome update and publish GitHub release
+      - name: Submit store updates and publish GitHub release
         run: node scripts/publish-release.mjs
         env:
           RELEASE_VERSION: ${{ needs.build.outputs.version }}
@@ -84,3 +84,5 @@ jobs:
           CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
           CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}

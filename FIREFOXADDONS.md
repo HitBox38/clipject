@@ -1,6 +1,12 @@
 # Firefox Add-ons submission — ClipJect
 
-Prepared September 23, 2026 for version 1.0.0. Not submitted or signed.
+ClipJect is listed on Firefox Add-ons. After the Mozilla secrets are configured,
+pushes to `master` submit updates automatically, including release notes and the
+reviewer source archive. See [CI setup and retries](docs/ci.md).
+
+The original version 1.0.0 submission kit below remains available for manual
+submission and listing maintenance. Automated releases use their generated
+version's ZIPs from `release/<version>/`.
 
 ## Files and listing fields
 

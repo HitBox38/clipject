@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { appendFile, readFile, readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { publishChrome, required, requestJson } from "./chrome-web-store.mjs";
+import { publishFirefox } from "./firefox-addons.mjs";
 import { parseVersion } from "./release-version.mjs";
 
 export async function publishRelease({ env, directory, fetcher = fetch }) {
@@ -17,6 +18,8 @@ export async function publishRelease({ env, directory, fetcher = fetch }) {
     "CWS_CLIENT_ID",
     "CWS_CLIENT_SECRET",
     "CWS_REFRESH_TOKEN",
+    "AMO_JWT_ISSUER",
+    "AMO_JWT_SECRET",
   ])
     required(env, key);
 
@@ -80,6 +83,13 @@ export async function publishRelease({ env, directory, fetcher = fetch }) {
 
   const assets = await readdir(directory);
   const chromeName = `clipject-${version}-chrome.zip`;
+  const firefoxName = `clipject-${version}-firefox.zip`;
+  const sourceName = `clipject-${version}-source.zip`;
+  assert(assets.includes(firefoxName), "Firefox archive is missing");
+  assert(
+    assets.includes(sourceName),
+    "Firefox reviewer source archive is missing",
+  );
   assert(assets.includes(chromeName), "Chrome archive is missing");
   assert(assets.includes("SHA256SUMS.txt"), "Checksums are missing");
   // Existing assets are immutable across retries, including after CWS submission.
@@ -119,12 +129,28 @@ export async function publishRelease({ env, directory, fetcher = fetch }) {
     archive: await readFile(`${directory}/${chromeName}`),
     fetcher,
   });
+  const firefoxState = await publishFirefox({
+    env,
+    version,
+    archive: await readFile(`${directory}/${firefoxName}`),
+    source: await readFile(`${directory}/${sourceName}`),
+    releaseNotes: await readFile(
+      new URL("../store/release-notes.txt", import.meta.url),
+      "utf8",
+    ),
+    reviewerNotes: await readFile(
+      new URL("../store/reviewer-notes.txt", import.meta.url),
+      "utf8",
+    ),
+    fetcher,
+  });
   const published = await json(`${api}/releases/${release.id}`, "PATCH", {
     draft: false,
     body:
       `${release.body ?? ""}\n\nChrome Web Store submission: **${state}**. ` +
       "Availability in Chrome is subject to Google's review. " +
-      "Firefox assets are provided for manual submission.",
+      `Firefox Add-ons submission: **${firefoxState}**. ` +
+      "Availability in Firefox is subject to Mozilla's review.",
   });
   console.log(`Released ${tag}: ${published.html_url}`);
   return published.html_url;
