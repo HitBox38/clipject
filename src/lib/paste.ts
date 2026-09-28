@@ -4,6 +4,26 @@ type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
 const insertionError = "This field couldn’t accept the snippet with Undo support.";
 
+const prepareInsertion = (el: SupportedElement, value: string) => {
+  const supportsMaxLength =
+    el instanceof HTMLTextAreaElement ||
+    ["text", "search", "url", "tel", "email", "password"].includes(el.type);
+  if (!supportsMaxLength) return { value, error: null };
+
+  // Normalize using a detached field before checking UTF-16 code-unit length.
+  // Insert that same value so native editing cannot truncate raw whitespace or
+  // newlines that the field's value setter would otherwise normalize away.
+  const candidate = el.cloneNode(false) as SupportedElement;
+  candidate.value = value;
+  const limit = el.maxLength;
+  const error =
+    limit >= 0 && candidate.value.length > limit
+      ? `This snippet exceeds this field's ${limit}-character limit. ` +
+        "Choose a shorter snippet or edit it in the library."
+      : null;
+  return { value: candidate.value, error };
+};
+
 /**
  * Replace the field as a native edit, preserving the browser's undo/redo stack.
  * execCommand is deprecated, but direct value setters cannot create an undoable
@@ -21,6 +41,9 @@ export const setNativeValue = (
   if (!el.isConnected || typeof document.execCommand !== "function") {
     return insertionError;
   }
+
+  let prepared = prepareInsertion(el, value);
+  if (prepared.error) return prepared.error;
 
   const start = el.selectionStart;
   const end = el.selectionEnd;
@@ -48,7 +71,10 @@ export const setNativeValue = (
     const selectionError = getEditabilityError(el);
     if (selectionError) return selectionError;
     if (root.activeElement !== el) return insertionError;
-    inserted = document.execCommand("insertText", false, value);
+    // Focus/select handlers can lower maxlength or change the control type.
+    prepared = prepareInsertion(el, value);
+    if (prepared.error) return prepared.error;
+    inserted = document.execCommand("insertText", false, prepared.value);
   } catch {
     inserted = false;
   } finally {

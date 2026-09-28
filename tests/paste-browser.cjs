@@ -123,6 +123,66 @@ const scenarios = () => {
     results.push(type + ": preserves draft on unsupported editing command");
     field.remove();
   }
+  for (const [type, limit, value, expected] of [
+    ["text", 5, "123456", null],
+    ["textarea", 5, "123456", null],
+    ["text", 0, "a", null],
+    ["text", 0, "", ""],
+    ["text", 1, "😀", null],
+    ["text", 2, "😀", "😀"],
+    ["text", 2, "a\r\nb", "ab"],
+    ["textarea", 3, "a\r\nb", "a\nb"],
+    ["textarea", 2, "a\r\nb", null],
+    ["url", 3, "  abc \n", "abc"],
+    ["email", 3, " abc\r\n ", "abc"],
+    ["number", 1, "123", "123"],
+  ]) {
+    const field = document.createElement(type === "textarea" ? "textarea" : "input");
+    if (type !== "textarea") field.type = type;
+    field.maxLength = limit;
+    const draft = type === "number" ? "9" : "Old draft";
+    field.value = draft;
+    document.body.append(field);
+    let edits = 0;
+    for (const event of ["input", "change"]) field.addEventListener(event, () => edits++);
+    const error = setNativeValue(field, value);
+    const label = type + " maxlength=" + limit + " " + JSON.stringify(value);
+    if (expected === null) {
+      check(typeof error === "string", label + " rejects");
+      check(field.value === draft && edits === 0, label + " preserves draft and events");
+    } else {
+      check(error === null, label + " accepts: " + error);
+      check(field.value === expected, label + " normalized full insertion: " + JSON.stringify(field.value));
+      document.execCommand("undo");
+      check(field.value === draft, label + " Undo restores draft");
+    }
+    results.push(label + ": pass");
+    field.remove();
+  }
+  for (const phase of ["focus", "select"]) {
+    const field = document.createElement("textarea");
+    field.value = "Keep draft";
+    field.maxLength = 20;
+    document.body.append(field);
+    let edits = 0;
+    for (const event of ["input", "change"]) field.addEventListener(event, () => edits++);
+    const lowerLimit = () => { field.maxLength = 2; };
+    if (phase === "focus") {
+      // The headless document may not have window focus yet. Mutate the limit
+      // synchronously at the focus call boundary to exercise revalidation.
+      const nativeFocus = field.focus;
+      field.focus = (...args) => { nativeFocus.apply(field, args); lowerLimit(); };
+    }
+    else {
+      const nativeSelect = field.select;
+      field.select = () => { nativeSelect.call(field); lowerLimit(); };
+    }
+    const limitError = setNativeValue(field, "Snippet text");
+    check(limitError?.includes("2-character limit"), phase + " rechecks maxlength: " + JSON.stringify({limitError, limit: field.maxLength, focused: document.hasFocus()}));
+    check(field.value === "Keep draft" && edits === 0, phase + " preserves draft and events");
+    results.push(phase + ": lowered maxlength rejects without truncating");
+    field.remove();
+  }
   const blocked = document.createElement("textarea");
   blocked.value = "Keep this draft";
   document.body.append(blocked);
