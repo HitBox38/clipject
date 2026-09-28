@@ -193,7 +193,7 @@ or replace loading the unpacked extension.
 
 ### CI and automatic releases
 
-PRs run Vitest coverage, Playwright browser regressions, lint, strict TypeScript
+PRs run Vitest coverage, Playwright browser regressions, lint, formatting, strict TypeScript
 checks, both browser builds, and package validation. The same checks run on pushes
 to `dev` and `master`. Run browser regressions locally with `pnpm test:e2e`.
 Pushes to `master` generate a new version, submit the Chrome update, and publish
@@ -203,11 +203,14 @@ required publishing credentials, version scheme, and retry instructions.
 
 ## Architecture
 
-The stack is Vite 8 with CRXJS, TypeScript 6, React 19, Tailwind CSS 4, shadcn/ui
+The stack is Vite 8 with CRXJS, TypeScript 7, React 19, Tailwind CSS 4, shadcn/ui
 components, and Zustand. Zustand manages UI state; extension storage provides
 persistence across browser contexts.
 
-TypeScript stays on the 6.0 release line alongside `typescript-eslint`. Node type definitions stay on version
+Oxlint provides linting, and Oxfmt provides formatting at 80 columns. Run
+`pnpm lint`, `pnpm format`, or `pnpm format:check`; `pnpm check` includes both
+linting and format verification. TypeScript 7 handles typechecking, while Vite
+uses Oxc to transform TypeScript and JSX. Node type definitions stay on version
 24 to match the recommended runtime. Updating the shadcn package does not
 regenerate the locally maintained components in `src/components/ui/`.
 

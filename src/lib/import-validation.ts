@@ -21,15 +21,15 @@ export type ValidationResult =
 
 const isRecord = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+};
 
 const isNumber = (v: unknown): v is number => {
   return typeof v === "number" && Number.isFinite(v);
-}
+};
 
 const isString = (v: unknown): v is string => {
   return typeof v === "string";
-}
+};
 
 /**
  * Validate a single Snippet-shaped object.
@@ -46,7 +46,7 @@ const validateSnippet = (s: unknown, ctx: string): string | null => {
     return `${ctx}: "label" must be a string if present`;
   }
   return null;
-}
+};
 
 const validatePageMeta = (p: unknown, ctx: string): string | null => {
   if (!isRecord(p)) return `${ctx}: not an object`;
@@ -54,7 +54,7 @@ const validatePageMeta = (p: unknown, ctx: string): string | null => {
   if (!isString(p.pathname)) return `${ctx}: missing "pathname"`;
   if (!isString(p.titleLastSeen)) return `${ctx}: missing "titleLastSeen"`;
   return null;
-}
+};
 
 const validateInputMeta = (m: unknown, ctx: string): string | null => {
   if (!isRecord(m)) return `${ctx}: not an object`;
@@ -67,7 +67,7 @@ const validateInputMeta = (m: unknown, ctx: string): string | null => {
     return `${ctx}: "type" must be a string if present`;
   }
   return null;
-}
+};
 
 const validateInputEntry = (e: unknown, key: string): string | null => {
   const ctx = `perInputDb["${key}"]`;
@@ -81,15 +81,12 @@ const validateInputEntry = (e: unknown, key: string): string | null => {
 
   if (!Array.isArray(e.snippets)) return `${ctx}: "snippets" is not an array`;
   for (let i = 0; i < e.snippets.length; i++) {
-    const snippetErr = validateSnippet(
-      e.snippets[i],
-      `${ctx}.snippets[${i}]`,
-    );
+    const snippetErr = validateSnippet(e.snippets[i], `${ctx}.snippets[${i}]`);
     if (snippetErr) return snippetErr;
   }
 
   return null;
-}
+};
 
 const validateTrackedInput = (t: unknown, idx: number): string | null => {
   const ctx = `trackedInputs[${idx}]`;
@@ -99,7 +96,7 @@ const validateTrackedInput = (t: unknown, idx: number): string | null => {
   if (!isString(t.inputSignature)) return `${ctx}: missing "inputSignature"`;
   if (!isNumber(t.registeredAt)) return `${ctx}: missing "registeredAt"`;
   return null;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Main validator
@@ -140,10 +137,7 @@ export const validateExportPayload = (raw: unknown): ValidationResult => {
     return { ok: false, error: '"data.globalSnippets" is not an array.' };
   }
   for (let i = 0; i < data.globalSnippets.length; i++) {
-    const err = validateSnippet(
-      data.globalSnippets[i],
-      `globalSnippets[${i}]`,
-    );
+    const err = validateSnippet(data.globalSnippets[i], `globalSnippets[${i}]`);
     if (err) return { ok: false, error: err };
   }
 
@@ -180,4 +174,4 @@ export const validateExportPayload = (raw: unknown): ValidationResult => {
   };
 
   return { ok: true, payload };
-}
+};

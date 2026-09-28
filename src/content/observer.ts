@@ -29,7 +29,10 @@ import {
 import { buildTrackedFingerprintSet, getEnabled } from "@/lib/storage";
 import { ext } from "@/lib/ext";
 import { mountPicker, unmountPicker } from "./mount";
-import { startElementSelector, isElementSelectorActive } from "./element-selector";
+import {
+  startElementSelector,
+  isElementSelectorActive,
+} from "./element-selector";
 import type { ClipjectMessage } from "@/types/messages";
 
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
@@ -52,7 +55,7 @@ let trackedFingerprints = new Set<string>();
 
 const refreshTrackedFingerprints = async (): Promise<void> => {
   trackedFingerprints = await buildTrackedFingerprintSet();
-}
+};
 
 const isInputTracked = (el: SupportedElement): boolean => {
   const origin = window.location.origin;
@@ -60,7 +63,7 @@ const isInputTracked = (el: SupportedElement): boolean => {
   const signature = computeInputSignature(el);
   const fingerprint = buildTrackingFingerprint(origin, pathname, signature);
   return trackedFingerprints.has(fingerprint);
-}
+};
 
 // ---------------------------------------------------------------------------
 // Focus handlers
@@ -93,7 +96,7 @@ const handleFocusIn = (event: FocusEvent): void => {
   debounceTimer = setTimeout(() => {
     void openPickerFor(target as SupportedElement);
   }, FOCUS_DEBOUNCE_MS);
-}
+};
 
 const handleFocusOut = (event: FocusEvent): void => {
   const next = event.relatedTarget as Node | null;
@@ -110,7 +113,7 @@ const handleFocusOut = (event: FocusEvent): void => {
 
     closePicker();
   }, FOCUS_DEBOUNCE_MS);
-}
+};
 
 const handleClickOutside = (event: MouseEvent): void => {
   const target = event.target as Node;
@@ -123,7 +126,7 @@ const handleClickOutside = (event: MouseEvent): void => {
   if (activeEl && activeEl === target) return;
 
   closePicker();
-}
+};
 
 // ---------------------------------------------------------------------------
 // Picker lifecycle
@@ -156,13 +159,13 @@ const openPickerFor = async (el: SupportedElement): Promise<void> => {
     inputMeta,
     onClose: closePicker,
   });
-}
+};
 
 const closePicker = (): void => {
   activeEl = null;
   activeSignature = null;
   unmountPicker();
-}
+};
 
 /** Close stale pickers when an SPA changes a field's identity or duplicates it. */
 const watchInputIdentity = (): void => {
@@ -191,14 +194,18 @@ const watchInputIdentity = (): void => {
 const onSpaNavigation = (): void => {
   // Page context changed — close the picker so stale keys aren't used.
   closePicker();
-}
+};
 
 const watchTitleChanges = (): MutationObserver => {
   const titleEl = document.querySelector("title");
   const observer = new MutationObserver(onSpaNavigation);
 
   if (titleEl) {
-    observer.observe(titleEl, { childList: true, characterData: true, subtree: true });
+    observer.observe(titleEl, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
   } else {
     // If there's no <title> yet, watch <head> for one to appear.
     const head = document.head;
@@ -207,7 +214,11 @@ const watchTitleChanges = (): MutationObserver => {
         const title = document.querySelector("title");
         if (title) {
           headObserver.disconnect();
-          observer.observe(title, { childList: true, characterData: true, subtree: true });
+          observer.observe(title, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+          });
         }
       });
       headObserver.observe(head, { childList: true });
@@ -215,7 +226,7 @@ const watchTitleChanges = (): MutationObserver => {
   }
 
   return observer;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Storage-change listeners
@@ -240,7 +251,7 @@ const watchStorageChanges = (): void => {
       void refreshTrackedFingerprints();
     }
   });
-}
+};
 
 // ---------------------------------------------------------------------------
 // Message listener (popup -> content)
@@ -257,7 +268,7 @@ const watchMessages = (): void => {
       return false;
     },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // Public init
@@ -286,4 +297,4 @@ export const initObserver = (): void => {
 
   // Listen for messages from popup / background.
   watchMessages();
-}
+};

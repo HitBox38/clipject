@@ -16,4 +16,4 @@ export const ResizeHandle = ({ onMouseDown }: Props) => {
       aria-label="Resize picker"
     />
   );
-}
+};

@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "sortImports": false,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "dist/**",
+    "dist-firefox/**",
+    "release/**",
+    ".tmp-ui/**",
+    ".pnpm-store/**",
+    "qa-evidence/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    ".agents/**",
+    ".codex/**",
+    "AGENTS.md",
+    "skills-lock.json",
+    "pnpm-lock.yaml",
+    ".claude/**"
+  ]
+}

@@ -50,7 +50,9 @@ the submitted Firefox ZIP, rather than comparing the unfiltered build folder.
 pnpm run build
 pnpm run build:firefox
 pnpm run lint
-node --test tests/*.test.cjs
+pnpm run format:check
+pnpm run typecheck
+pnpm test
 pnpm dlx web-ext@10.7.0 lint --source-dir dist-firefox
 ```
 

@@ -14,15 +14,18 @@ server on port 4173; leave that port free.
 
 ## Commands
 
-| Command              | Purpose                                                                |
-| -------------------- | ---------------------------------------------------------------------- |
-| `pnpm test`          | Run all Vitest unit and DOM tests once                                 |
-| `pnpm test:watch`    | Watch tests during development                                         |
-| `pnpm test:coverage` | Run Vitest with coverage gates and HTML/LCOV reports                   |
-| `pnpm test:e2e`      | Build the Chrome extension and run Playwright                          |
-| `pnpm test:e2e:ui`   | Build and open the Playwright test UI                                  |
-| `pnpm typecheck`     | Check application, tests, fixtures, and test configurations            |
-| `pnpm check`         | Lint, typecheck, coverage, browser tests, and Chrome/Firefox packaging |
+| Command              | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm test`          | Run all Vitest unit and DOM tests once                                             |
+| `pnpm test:watch`    | Watch tests during development                                                     |
+| `pnpm test:coverage` | Run Vitest with coverage gates and HTML/LCOV reports                               |
+| `pnpm test:e2e`      | Build the Chrome extension and run Playwright                                      |
+| `pnpm test:e2e:ui`   | Build and open the Playwright test UI                                              |
+| `pnpm typecheck`     | Check application, tests, fixtures, and test configurations                        |
+| `pnpm lint`          | Run Oxlint with TypeScript, React Hooks, and Refresh rules                         |
+| `pnpm format`        | Format project files with Oxfmt (80 columns)                                       |
+| `pnpm format:check`  | Check formatting without writing files                                             |
+| `pnpm check`         | Lint, formatting, typecheck, coverage, browser tests, and Chrome/Firefox packaging |
 
 For a focused run:
 
@@ -36,6 +39,22 @@ pnpm exec playwright show-report
 `pnpm build` first so you do not test a stale extension. Coverage is written to
 `coverage/`, browser reports to `playwright-report/`, and failure artifacts to
 `test-results/`. These directories are ignored by Git.
+
+## Lint and formatting configuration
+
+`.oxlintrc.json` carries the previous recommended ESLint/TypeScript checks,
+React Hooks checks, and Refresh export exceptions. Native React Compiler
+checks are enabled explicitly; they are experimental in Oxlint. Compiler
+`config` and `gating` checks have no equivalent because Oxlint does not expose
+those compiler options. Strict TypeScript covers the skipped strict-mode
+syntax checks and undefined names. `no-useless-assignment` is enabled explicitly.
+The Playwright fixture `use` callback is exempt from Rules of Hooks, and test
+TSX files are exempt from Refresh export checks, as before.
+
+`.oxfmtrc.json` retains 80-column formatting without import or package-key
+sorting. Generated output, lockfiles, local QA artifacts, and vendored agent
+skills are excluded. Run `pnpm format` before committing and `pnpm format:check`
+to use the same formatting gate as CI.
 
 ## Test organization
 
@@ -115,7 +134,7 @@ coverage grows; do not add assertions solely to execute lines.
 `.github/workflows/ci.yml` runs on pull requests, pushes to `dev` and `master`, and manual
 workflow dispatch. Independent jobs run:
 
-1. Lint, application/test typechecking, and Vitest coverage.
+1. Lint, formatting, application/test typechecking, and Vitest coverage.
 2. Chrome build and the complete Chromium extension suite, including the fixed-behavior
    regression cases.
 3. Chrome and Firefox builds and store-package validation.

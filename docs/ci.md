@@ -1,7 +1,7 @@
 # CI and releases
 
 PRs run **CI / Tests, lint, and builds**, an aggregate of independent jobs for
-lint, strict application/test typechecking, Vitest coverage, Playwright Chromium
+lint, formatting, strict application/test typechecking, Vitest coverage, Playwright Chromium
 extension regressions, and validated Chrome/Firefox store packages. The same
 checks run on pushes to `dev` and `master`. PR jobs have read-only repository
 access and no publishing secrets. The existing aggregate check name is retained

@@ -37,22 +37,22 @@ export type DecodeResult =
 
 const isRecord = (v: unknown): v is Record<string, unknown> => {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+};
 
 const isString = (v: unknown): v is string => {
   return typeof v === "string";
-}
+};
 
 const isNumber = (v: unknown): v is number => {
   return typeof v === "number" && Number.isFinite(v);
-}
+};
 
 /**
  * Standard base64 -> base64url (URL-safe, no padding).
  */
 const toBase64Url = (base64: string): string => {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+};
 
 /**
  * base64url -> standard base64.
@@ -63,7 +63,7 @@ const fromBase64Url = (b64url: string): string => {
   const padLen = (4 - (b64.length % 4)) % 4;
   b64 += "=".repeat(padLen);
   return b64;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Encode
@@ -81,7 +81,7 @@ export const encodeShareString = (payload: SharedSnippetPayload): string => {
       .reduce((acc, byte) => acc + String.fromCharCode(byte), ""),
   );
   return `${SHARE_PREFIX}${toBase64Url(base64)}`;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Decode + validate
@@ -89,7 +89,7 @@ export const encodeShareString = (payload: SharedSnippetPayload): string => {
 
 const validateSharedPayload = (raw: unknown): string | null => {
   if (!isRecord(raw)) return "Not a JSON object.";
-  if (raw.type !== "per-input-snippet") return 'Invalid payload type.';
+  if (raw.type !== "per-input-snippet") return "Invalid payload type.";
 
   // page
   if (!isRecord(raw.page)) return "Missing page metadata.";
@@ -119,7 +119,7 @@ const validateSharedPayload = (raw: unknown): string | null => {
   if (!isNumber(raw.snippet.updatedAt)) return 'Missing snippet "updatedAt".';
 
   return null;
-}
+};
 
 /**
  * Decode and validate a share string.
@@ -156,7 +156,7 @@ export const decodeShareString = (str: string): DecodeResult => {
   if (err) return { ok: false, error: err };
 
   return { ok: true, payload: parsed as SharedSnippetPayload };
-}
+};
 
 // ---------------------------------------------------------------------------
 // Import
@@ -184,4 +184,4 @@ export const importSharedSnippet = async (
   const inputMeta: InputMeta = { ...input, lastSeenAt: Date.now() };
 
   await saveInputSnippet(compositeKey, pageMeta, inputMeta, fresh);
-}
+};

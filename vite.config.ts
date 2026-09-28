@@ -29,7 +29,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      crx({ manifest: browserManifest, browser: firefox ? "firefox" : "chrome" }),
+      crx({
+        manifest: browserManifest,
+        browser: firefox ? "firefox" : "chrome",
+      }),
     ],
     build: {
       outDir: firefox ? "dist-firefox" : "dist",

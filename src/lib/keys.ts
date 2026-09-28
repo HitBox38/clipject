@@ -23,7 +23,7 @@ export const computePageKey = (): PageKeyResult => {
     key: `${origin}${pathname}${KEY_PAGE_TITLE_SEP}${title}`,
     meta: { origin, pathname, titleLastSeen: title },
   };
-}
+};
 
 // ---------------------------------------------------------------------------
 // Input signature
@@ -62,7 +62,7 @@ const getDomPath = (el: Element): string => {
   }
 
   return parts.join(" > ");
-}
+};
 
 /**
  * Prefer the first stable attribute that uniquely identifies this field among
@@ -106,7 +106,7 @@ export const buildCompositeKey = (
   inputSignature: string,
 ): string => {
   return `${pageKey}${KEY_PAGE_TITLE_SEP}${inputSignature}`;
-}
+};
 
 /**
  * Build a tracking fingerprint for an input on a page.
@@ -122,7 +122,7 @@ export const buildTrackingFingerprint = (
   inputSignature: string,
 ): string => {
   return `${origin}${pathname}${KEY_PAGE_TITLE_SEP}${inputSignature}`;
-}
+};
 
 /**
  * Build InputMeta from an element.
@@ -140,17 +140,14 @@ export const buildInputMeta = (el: SupportedElement): InputMeta => {
   }
 
   return meta;
-}
+};
 
 /**
  * Returns `true` when the element is a password field we should skip.
  */
 export const isPasswordField = (el: Element): boolean => {
-  return (
-    el instanceof HTMLInputElement &&
-    el.type === "password"
-  );
-}
+  return el instanceof HTMLInputElement && el.type === "password";
+};
 
 /**
  * Returns `true` when the element is a supported, editable input or textarea.
@@ -183,4 +180,4 @@ export const isSupportedField = (el: Element): el is SupportedElement => {
     return !unsupported.has(el.type);
   }
   return false;
-}
+};

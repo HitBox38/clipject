@@ -4,9 +4,12 @@ import { vi } from "vitest";
 export function installEditingCommand(emitInput = true) {
   const command = vi.fn((_command: string, _showUI: boolean, value: string) => {
     const field = document.activeElement;
-    if (!(
-      field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement
-    ))
+    if (
+      !(
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement
+      )
+    )
       return false;
     const prototype =
       field instanceof HTMLTextAreaElement
