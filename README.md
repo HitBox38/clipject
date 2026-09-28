@@ -5,8 +5,9 @@ forms. Choose the fields you want to track, then focus a tracked field to open a
 searchable snippet picker. Save snippets for that field and page, or keep global
 snippets available across all tracked fields.
 
-Chrome and desktop Firefox use separate Manifest V3 builds. Version **1.0.0**
-is prepared for store submission; it has not been published by this work.
+Chrome and desktop Firefox use separate Manifest V3 builds. Download versioned
+packages from [GitHub Releases](https://github.com/HitBox38/clipject/releases).
+Release notes report Chrome submission status; Firefox submission is manual.
 See the [submission kit](store/README.md) for packages, images, and listing copy.
 
 ## Features
@@ -17,7 +18,7 @@ See the [submission kit](store/README.md) for packages, images, and listing copy
 - **Searchable picker:** see per-input snippets first, then global snippets.
   Search labels and text, navigate with the keyboard, and resize the picker.
 - **Paste into forms:** selecting a snippet replaces the field's entire value
-  using its native setter and dispatches bubbling `input` and `change` events.
+  with native Undo/Redo support and bubbling `input` and `change` events.
   It does not insert at the cursor or submit the form.
 - **Explicit saving:** **Save current** saves the field's current nonempty value
   as a per-input snippet. **+ Add new** accepts text, an optional label, and a

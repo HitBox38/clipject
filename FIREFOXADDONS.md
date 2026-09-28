@@ -4,18 +4,18 @@ ClipJect is listed on Firefox Add-ons. After the Mozilla secrets are configured,
 pushes to `master` submit updates automatically, including release notes and the
 reviewer source archive. See [CI setup and retries](docs/ci.md).
 
-The original version 1.0.0 submission kit below remains available for manual
-submission and listing maintenance. Automated releases use their generated
-version's ZIPs from `release/<version>/`.
+Updated September 29, 2026 for the 1.0.1 release candidate. The files below are
+also available for manual submission and listing maintenance. Submission status
+is recorded in GitHub Releases.
 
 ## Files and listing fields
 
 | AMO field                                        | Value / file                                                                                                            |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | Distribution                                     | On this site (listed on addons.mozilla.org)                                                                             |
-| Add-on package                                   | `release/1.0.0/clipject-1.0.0-firefox.zip`                                                                              |
+| Add-on package                                   | `release/1.0.1/clipject-1.0.1-firefox.zip`                                                                              |
 | Provide source code?                             | Yes: Vite bundles/minifies the source                                                                                   |
-| Source code                                      | `release/1.0.0/clipject-1.0.0-source.zip`                                                                               |
+| Source code                                      | `release/1.0.1/clipject-1.0.1-source.zip`                                                                               |
 | Build instructions                               | `BUILDING.md`, also in the source archive                                                                               |
 | Name                                             | ClipJect                                                                                                                |
 | Suggested slug                                   | clipject (AMO checks availability)                                                                                      |

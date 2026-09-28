@@ -1,5 +1,10 @@
-ClipJect 1.0.0 — first store release.
+ClipJect 1.0.1 — more reliable snippet insertion.
 
-Select the webpage fields where you want to reuse text. Save field-specific snippets or keep a global library, search and paste with the keyboard or mouse, and manage labels and text in your snippet library.
+- Keep Enter and arrow keys working normally while typing in webpage fields.
+- Undo and redo snippet insertion with the browser's native editing history.
+- Keep snippets for repeated fields separate, even when fields share a name.
+- Use the snippet picker inside native webpage dialogs.
+- Prevent insertion into fields that become read-only, disabled, or unsupported.
+- Reject snippets that exceed a field's maximum length without changing its value.
 
-Includes light/dark/system appearance, local backup export/import, share codes, field cloning, and a confirmed Delete all control. No account, automatic cloud sync, or analytics. Password fields are excluded.
+Saved snippets stay on your device. This update adds no permissions or data collection.

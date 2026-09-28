@@ -1,17 +1,21 @@
 # ClipJect submission kit
 
-Version 1.0.0 · prepared September 23, 2026 · not submitted to either store.
+Version 1.0.1 · prepared September 29, 2026.
+
+Download the generated packages from
+[GitHub Releases](https://github.com/HitBox38/clipject/releases). Chrome submission
+status is recorded in the release; Firefox submission remains manual.
 
 Everything is also bundled in
-`release/1.0.0/clipject-1.0.0-submission-kit.zip`. Extract it and open this guide.
+`release/1.0.1/clipject-1.0.1-submission-kit.zip`. Extract it and open this guide.
 
 ## What to upload
 
 | Store / field                  | File                                       |
 | ------------------------------ | ------------------------------------------ |
-| Chrome: extension              | `release/1.0.0/clipject-1.0.0-chrome.zip`  |
-| Firefox: add-on                | `release/1.0.0/clipject-1.0.0-firefox.zip` |
-| Firefox: source code           | `release/1.0.0/clipject-1.0.0-source.zip`  |
+| Chrome: extension              | `release/1.0.1/clipject-1.0.1-chrome.zip`  |
+| Firefox: add-on                | `release/1.0.1/clipject-1.0.1-firefox.zip` |
+| Firefox: source code           | `release/1.0.1/clipject-1.0.1-source.zip`  |
 | Both: icon                     | `store/assets/icon-128.png`                |
 | Both: screenshots              | Four numbered PNGs in `store/assets/`      |
 | Chrome: small promotional tile | `store/assets/promo-small-440x280.png`     |
@@ -31,24 +35,24 @@ whole repository as the installable extension.
   [build instructions](../BUILDING.md).
 - [Verification record](VERIFICATION.md).
 
-## Remaining steps in your accounts
+## Submission status and remaining steps
 
-1. The approved privacy policy is included in the push to the public `master`
-   branch. Its URL is
-   `https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.
-   Verify it opens while signed out after the push.
-2. Upload each store's matching ZIP. Firefox also needs the separate source ZIP.
-3. Paste listing fields, attach images, and enter privacy disclosures. Use the
-   GitHub Issues support URL; a support mailbox has not been created. Complete
-   contact/trader/account fields using your own details in the dashboards.
-4. In current desktop Firefox, complete a manual save/paste and popup/library
-   smoke test before submission. Temporary install and background startup
-   passed; full Firefox UI automation was unavailable (see verification).
-5. Check the preview and validation results, then submit for review. Choose
-   visibility, regions, and automatic/manual publication settings as desired.
+The Release workflow uploads and submits the Chrome update using the configured
+publisher account. Check its result and the GitHub release before attempting a
+manual Chrome upload. A pending review is not a live update.
 
-The privacy policy is published with this push; no store listing was submitted.
-Store approval is a separate process.
+Firefox submission remains manual:
+
+1. Download the matching Firefox package and source ZIP from GitHub Releases.
+2. Complete a save/paste and popup/library smoke test in current desktop Firefox.
+   Chromium has automated coverage; full Firefox UI verification is outstanding.
+3. Upload both ZIPs, paste listing fields, and attach the supplied images.
+4. Complete account-specific contact and distribution fields, inspect AMO's
+   validation results, and submit for review.
+
+The privacy policy is available on the public `master` branch at
+`https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.
+Use the GitHub Issues support URL; no separate support mailbox was created.
 
 ## Rebuild
 
@@ -57,6 +61,9 @@ pnpm install --frozen-lockfile
 pnpm run release
 ```
 
+Local builds use the checked-in base version (currently 1.0.0). The Release
+workflow stamps the release version into both JSON files before packaging.
+The attached source ZIP already has the release version stamped.
 Keep package and manifest versions equal. ZIPs and SHA-256 sums are generated
 in `release/<version>/`, ignored by Git. The source ZIP uses an explicit
 allowlist excluding profiles, secrets, and caches. Refresh screenshots when

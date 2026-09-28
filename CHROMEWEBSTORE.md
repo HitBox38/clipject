@@ -1,20 +1,21 @@
 # Chrome Web Store submission — ClipJect
 
-Prepared September 23, 2026 for version 1.0.0. Not submitted or published.
+Updated September 29, 2026 for the 1.0.1 release candidate.
+Submission status is recorded by the Release workflow and GitHub release.
 Start with [the upload guide](store/README.md).
 
-Automation setup updated September 28, 2026: pushes to `master` now have a
+Automation setup: pushes to `master` now have a
 workflow for versioned builds, Chrome Web Store v2 submission, and GitHub
-releases. Configure the environment in [CI setup](docs/ci.md) before enabling
-publishing. This change itself has not uploaded or published a version.
-Generated release versions and submission states are recorded in GitHub
-Releases; the 1.0.0 paths below describe the original manual submission kit.
+releases. The publishing environment is configured as described in [CI setup](docs/ci.md).
+The workflow records the result of each submission.
+The first Release workflow run generates version 1.0.1 from base 1.0.0.
+Use the attached packages and submission state in GitHub Releases.
 
 ## Upload and listing fields
 
 | Dashboard field                | Value / file                                                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| Package                        | `release/1.0.0/clipject-1.0.0-chrome.zip`                                                                               |
+| Package                        | `release/1.0.1/clipject-1.0.1-chrome.zip`                                                                               |
 | Name                           | ClipJect                                                                                                                |
 | Summary                        | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
 | Detailed description           | Copy `store/listing-description.txt`                                                                                    |
@@ -82,8 +83,7 @@ copy/export, website insertion, and deletion details are in [PRIVACY.md](PRIVACY
 
 ## Privacy policy URL
 
-The approved policy is in this release and will be public on this repository's
-`master` branch after the approved push:
+The policy is public on this repository's `master` branch:
 
 `https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`
 
@@ -112,6 +112,7 @@ Do not upload the source archive as the Chrome extension package.
 
 | Version | Date       | Changes                                                                                                                                             | Status                  |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1.0.1   | 2026-09-29 | Native keyboard and Undo/Redo behavior; separate repeated fields; dialog picker support; readonly and maximum-length guards.                        | Release candidate       |
 | 1.0.0   | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
 For manual uploads, increment both `manifest.json` and `package.json` before
