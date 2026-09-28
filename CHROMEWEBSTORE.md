@@ -1,7 +1,6 @@
 # Chrome Web Store submission — ClipJect
 
 Prepared September 23, 2026 for version 1.0.0. Not submitted or published.
-Last updated September 28, 2026.
 Start with [the upload guide](store/README.md).
 
 ## Upload and listing fields
@@ -106,7 +105,6 @@ Do not upload the source archive as the Chrome extension package.
 
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
-| Unreleased | 2026-09-28 | Enter and arrow keys keep their normal behavior in webpage fields; focus snippet search to browse and insert with the keyboard. | Pending release |
 | 1.0.0 | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
 If 1.0.0 already exists in your dashboard, increment both `manifest.json` and
