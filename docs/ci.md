@@ -39,6 +39,23 @@ branch. If it is renamed to `main`, update the branch filter in
 | `CWS_CLIENT_SECRET` | Secret   | Google OAuth client secret                                  |
 | `CWS_REFRESH_TOKEN` | Secret   | Refresh token with Chrome Web Store publishing access       |
 
+5. For the existing Firefox listing, obtain the JWT issuer and secret from
+   [Mozilla's API credentials page](https://addons.mozilla.org/developers/addon/api/key/)
+   using an account that owns ClipJect. Add both as secrets in the same
+   `chrome-web-store` environment (or as repository Actions secrets):
+
+| Name             | Kind   | Value                                             |
+| ---------------- | ------ | ------------------------------------------------- |
+| `AMO_JWT_ISSUER` | Secret | Mozilla JWT issuer (for example, `user:12345:67`) |
+| `AMO_JWT_SECRET` | Secret | Mozilla JWT secret                                |
+
+The existing environment name is retained so its Chrome credentials and branch
+restrictions continue to apply to both stores. Firefox uses the existing add-on
+ID `clipject@tomer-norman.dev`, matching `vite.config.ts`; no numeric AMO ID or new
+listing is needed. Missing Mozilla secrets fail the job before either store is
+contacted. Keep `store/release-notes.txt` and `store/reviewer-notes.txt` current:
+these are submitted to Mozilla with each version. Firefox targets desktop only.
+
 GitHub releases use the automatically supplied `GITHUB_TOKEN`, with
 `contents: write` granted only to the publish job. No GitHub PAT is required.
 Repository or organization policy must allow Actions to create releases/tags.
@@ -60,7 +77,7 @@ generated source archives, includes the stamped manifest/package versions and
 can reproduce the released version without knowing the workflow run number.
 
 Before enabling CI, ensure the first generated version exceeds the version
-already in the Chrome dashboard and any existing `vX.Y.Z` tags. If needed,
+already in both store dashboards and any existing `vX.Y.Z` tags. If needed,
 increase the base version in both JSON files. For a minor/major release, bump
 both base versions together; the run counter continues increasing. Do not
 decrease the base version, reset the workflow counter, or recreate this workflow
@@ -72,14 +89,18 @@ packages are transferred to the publishing job as a GitHub Actions artifact,
 retained for 30 days. That job installs no project dependencies. It creates a
 draft GitHub release with generated notes, uploads the existing packager's
 Chrome ZIP, Firefox ZIP, stamped source ZIP, submission kit, and SHA256SUMS,
-then uploads the Chrome ZIP using the Chrome Web Store v2 API. Firefox remains
-a manual store submission.
+then submits Chrome via the Chrome Web Store v2 API and Firefox via the AMO v5
+API. Firefox uploads the exact packaged ZIP, waits for validation, creates a
+listed desktop version with release/reviewer notes, and attaches the stamped
+source ZIP required for review. Short-lived Mozilla JWTs are generated in memory
+for each request; no additional publishing dependencies are installed.
 
-After Chrome accepts the publish request, the GitHub release becomes public.
-The release notes record the submission state. **PENDING_REVIEW is a successful
-submission, not confirmation that the update is live.** Google controls the
-review and publishes automatically after approval; no recurring monitor is
-installed. Existing visibility and rollout settings are preserved.
+After both stores accept submission (including Firefox source upload), the
+GitHub release becomes public. Its notes record both submission states.
+**PENDING_REVIEW is a successful submission, not confirmation that the update is
+live.** Google and Mozilla control their reviews and availability. No recurring
+monitor is installed. Chrome visibility and rollout settings are preserved;
+Firefox updates the existing public listing.
 
 ## Failures and retries
 
@@ -93,8 +114,12 @@ installed. Existing visibility and rollout settings are preserved.
 - Upload processing is polled for up to five minutes. Failed/unknown upload
   states, rejected publication, HTTP errors, missing configuration, mismatched
   versions, and timeouts all fail the job.
-- If Chrome accepted the version but the GitHub update failed, rerunning the
-  failed job recognizes the accepted version and finishes the GitHub release.
+- If either store accepted the version but a later step failed, rerunning the
+  failed job recognizes accepted versions and completes the remaining steps.
+  Firefox includes pending/rejected versions in its lookup, refuses disabled or
+  unlisted matches, and repairs a missing source upload after an interruption.
+  A Firefox failure leaves the GitHub release as a draft; it does not roll back
+  an accepted Chrome submission.
   Existing draft assets are checked against SHA-256 digests before reuse.
   An already published GitHub release for the same commit is a no-op.
 - For a failure before submission, retry the failed job after correcting the
@@ -111,10 +136,12 @@ installed. Existing visibility and rollout settings are preserved.
   the workflow refuses to silently replace an already submitted package.
 
 No live store request is needed for `pnpm test`; publishing is covered with
-mocked Google and GitHub API responses. A real deployment still requires the
+mocked Google, Mozilla, and GitHub API responses. A real deployment still requires the
 configuration above and a successful workflow run on GitHub.
 
 References: [Chrome upload API](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/media/upload),
 [Chrome publish API](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/publishers.items/publish),
+[Mozilla submission API](https://mozilla.github.io/addons-server/topics/api/addons.html),
+[Mozilla API authentication](https://mozilla.github.io/addons-server/topics/api/auth.html),
 [GitHub release API](https://docs.github.com/en/rest/releases/releases), and
 [GitHub concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).

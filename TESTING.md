@@ -162,5 +162,7 @@ writes, failed replacements → `storage.test.ts`; share validation →
 The later `dev` regressions were also migrated: field identity → `keys-paste`
 and `observer`; editability/maxlength → `editability-length`, `selector`, and
 `picker`; standalone native-browser scripts → `native-editing.spec.ts`; release
-versioning and mocked GitHub/Chrome publication → `unit/release.test.ts`.
+versioning and mocked GitHub/Chrome publication → `unit/release.test.ts`;
+Mozilla validation, source upload, authentication, and retries →
+`unit/firefox-release.test.ts`.
 `pnpm test:browser` remains an alias for `pnpm test:e2e` for release compatibility.
