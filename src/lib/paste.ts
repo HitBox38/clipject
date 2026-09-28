@@ -1,41 +1,117 @@
-/**
- * Programmatically set a value on an input/textarea and dispatch events
- * so that React, Vue, Angular, and vanilla JS listeners all detect the change.
- */
+import { isSupportedField } from "./keys";
 
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
-/**
- * Set `value` on `el` using the native prototype setter (bypasses React's
- * synthetic value property) then dispatches `input` and `change` events.
- */
-export const setNativeValue = (el: SupportedElement, value: string): void => {
-  // 1. Locate the native setter on the prototype chain.
-  //    React overwrites `.value` on the instance, so we need the original.
-  const descriptor =
-    Object.getOwnPropertyDescriptor(
-      Object.getPrototypeOf(el),
-      "value",
-    ) ??
-    Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value",
-    ) ??
-    Object.getOwnPropertyDescriptor(
-      HTMLTextAreaElement.prototype,
-      "value",
-    );
+const insertionError =
+  "This field couldn’t accept the snippet with Undo support.";
 
-  if (descriptor?.set) {
-    descriptor.set.call(el, value);
-  } else {
-    // Last resort — direct assignment (works for vanilla HTML).
-    el.value = value;
+const prepareInsertion = (el: SupportedElement, value: string) => {
+  const supportsMaxLength =
+    el instanceof HTMLTextAreaElement ||
+    ["text", "search", "url", "tel", "email", "password"].includes(el.type);
+  if (!supportsMaxLength) return { value, error: null };
+
+  // Normalize using a detached field before checking UTF-16 code-unit length.
+  // Insert that same value so native editing cannot truncate raw whitespace or
+  // newlines that the field's value setter would otherwise normalize away.
+  const candidate = el.cloneNode(false) as SupportedElement;
+  candidate.value = value;
+  const limit = el.maxLength;
+  const error =
+    limit >= 0 && candidate.value.length > limit
+      ? `This snippet exceeds this field's ${limit}-character limit. ` +
+        "Choose a shorter snippet or edit it in the library."
+      : null;
+  return { value: candidate.value, error };
+};
+
+/**
+ * Replace the field as a native edit, preserving the browser's undo/redo stack.
+ * execCommand is deprecated, but direct value setters cannot create an undoable
+ * edit. There is currently no equivalent replacement for insertText.
+ * Return an error rather than silently falling back to a destructive value setter.
+ */
+export const setNativeValue = (
+  el: SupportedElement,
+  value: string,
+): string | null => {
+  const editabilityError = getEditabilityError(el);
+  if (editabilityError) return editabilityError;
+
+  const document = el.ownerDocument;
+  if (!el.isConnected || typeof document.execCommand !== "function") {
+    return insertionError;
   }
 
-  // 2. Dispatch `input` (React / most frameworks listen here).
-  el.dispatchEvent(new Event("input", { bubbles: true }));
+  let prepared = prepareInsertion(el, value);
+  if (prepared.error) return prepared.error;
 
-  // 3. Dispatch `change` (form libraries that only listen on change).
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const direction = el.selectionDirection;
+  let inputFired = false;
+  let inserted = false;
+  const recordInput = () => {
+    inputFired = true;
+  };
+
+  el.addEventListener("input", recordInput, true);
+  try {
+    el.focus({ preventScroll: true });
+    const focusError = getEditabilityError(el);
+    if (focusError) return focusError;
+    // A page may redirect focus, or the field may have become inert/disabled.
+    // Never send an editing command to a different field in that case.
+    const root = el.getRootNode() as Document | ShadowRoot;
+    if (root.activeElement !== el) return insertionError;
+
+    // select(), unlike setSelectionRange(), also works for Chrome's email and
+    // number inputs. Unsupported controls (e.g. dates) reject insertText.
+    el.select();
+    // Page focus/select handlers may change editability synchronously.
+    const selectionError = getEditabilityError(el);
+    if (selectionError) return selectionError;
+    if (root.activeElement !== el) return insertionError;
+    // Focus/select handlers can lower maxlength or change the control type.
+    prepared = prepareInsertion(el, value);
+    if (prepared.error) return prepared.error;
+    inserted = document.execCommand("insertText", false, prepared.value);
+  } catch {
+    inserted = false;
+  } finally {
+    el.removeEventListener("input", recordInput, true);
+    if (!inserted && start !== null && end !== null) {
+      try {
+        el.setSelectionRange(start, end, direction ?? undefined);
+      } catch {
+        // Page handlers may have changed the control type during the attempt.
+      }
+    }
+  }
+
+  if (!inserted) return insertionError;
+
+  // Chrome emits the native input event, including for controlled React fields.
+  // Other browsers may omit it. Notify listeners once in either case.
+  if (!inputFired) {
+    el.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+  }
   el.dispatchEvent(new Event("change", { bubbles: true }));
-}
+  return null;
+};
+
+const getEditabilityError = (el: SupportedElement): string | null => {
+  if (!el.isConnected) {
+    return (
+      "This field is no longer on the page. " +
+      "Close this picker and select a field again."
+    );
+  }
+  if (!isSupportedField(el)) {
+    return (
+      "This field is no longer editable. " +
+      "Choose an editable field and try again."
+    );
+  }
+  return null;
+};

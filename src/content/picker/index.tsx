@@ -58,7 +58,11 @@ export const Picker = ({
 
   const handleSelect = useCallback(
     (item: SnippetItemData) => {
-      setNativeValue(inputEl, item.snippet.value);
+      const insertionError = setNativeValue(inputEl, item.snippet.value);
+      if (insertionError) {
+        setFeedback(insertionError);
+        return;
+      }
       onClose();
       inputEl.focus();
     },
@@ -67,6 +71,7 @@ export const Picker = ({
 
   const { highlightedIndex, setHighlightedIndex } = usePickerKeyboard({
     enabled: !isAdding,
+    pickerRef,
     items: filteredAll,
     onSelect: handleSelect,
     onClose,
@@ -194,7 +199,7 @@ export const Picker = ({
       )}
       {!isAdding && (
         <p className="clipject-keyboard-hint">
-          ↑ ↓ to browse · Enter to insert · Esc to close
+          Focus search: ↑ ↓ to browse · Enter to insert · Esc to close
         </p>
       )}
       <ResizeHandle onMouseDown={onResizeStart} />

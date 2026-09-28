@@ -1,30 +1,36 @@
 # Firefox Add-ons submission — ClipJect
 
-Prepared September 23, 2026 for version 1.0.0. Not submitted or signed.
+ClipJect is listed on Firefox Add-ons. After the Mozilla secrets are configured,
+pushes to `master` submit updates automatically, including release notes and the
+reviewer source archive. See [CI setup and retries](docs/ci.md).
+
+Updated September 29, 2026 for the 1.0.1 release candidate. The files below are
+also available for manual submission and listing maintenance. Submission status
+is recorded in GitHub Releases.
 
 ## Files and listing fields
 
-| AMO field | Value / file |
-| --- | --- |
-| Distribution | On this site (listed on addons.mozilla.org) |
-| Add-on package | `release/1.0.0/clipject-1.0.0-firefox.zip` |
-| Provide source code? | Yes: Vite bundles/minifies the source |
-| Source code | `release/1.0.0/clipject-1.0.0-source.zip` |
-| Build instructions | `BUILDING.md`, also in the source archive |
-| Name | ClipJect |
-| Suggested slug | clipject (AMO checks availability) |
-| Summary | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
-| Description | `store/listing-description.txt` |
-| Language | English (en-US) |
-| Category | Other |
-| License | MIT License (see `LICENSE`) |
-| Support website | `https://github.com/HitBox38/clipject/issues` |
-| Homepage | `https://github.com/HitBox38/clipject` |
-| Requires payment or additional software/hardware | No |
-| Platforms | Desktop Windows, macOS, Linux; do not select Android for this release |
-| Privacy policy | Paste `PRIVACY.md` into the policy field |
-| Notes for reviewers | `store/reviewer-notes.txt` |
-| Release notes | `store/release-notes.txt` |
+| AMO field                                        | Value / file                                                                                                            |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Distribution                                     | On this site (listed on addons.mozilla.org)                                                                             |
+| Add-on package                                   | `release/1.0.1/clipject-1.0.1-firefox.zip`                                                                              |
+| Provide source code?                             | Yes: Vite bundles/minifies the source                                                                                   |
+| Source code                                      | `release/1.0.1/clipject-1.0.1-source.zip`                                                                               |
+| Build instructions                               | `BUILDING.md`, also in the source archive                                                                               |
+| Name                                             | ClipJect                                                                                                                |
+| Suggested slug                                   | clipject (AMO checks availability)                                                                                      |
+| Summary                                          | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
+| Description                                      | `store/listing-description.txt`                                                                                         |
+| Language                                         | English (en-US)                                                                                                         |
+| Category                                         | Other                                                                                                                   |
+| License                                          | MIT License (see `LICENSE`)                                                                                             |
+| Support website                                  | `https://github.com/HitBox38/clipject/issues`                                                                           |
+| Homepage                                         | `https://github.com/HitBox38/clipject`                                                                                  |
+| Requires payment or additional software/hardware | No                                                                                                                      |
+| Platforms                                        | Desktop Windows, macOS, Linux; do not select Android for this release                                                   |
+| Privacy policy                                   | Paste `PRIVACY.md` into the policy field                                                                                |
+| Notes for reviewers                              | `store/reviewer-notes.txt`                                                                                              |
+| Release notes                                    | `store/release-notes.txt`                                                                                               |
 
 Use the public support website; no separate support email is supplied. The
 experimental designation is your choice in AMO, not selected by this kit.
@@ -53,12 +59,12 @@ Use `store/assets/icon-128.png` and the four numbered 1280 × 800 screenshots.
 They show the shared UI in a Chromium runtime without browser chrome. The
 Chrome promotional tiles are not required AMO listing assets.
 
-| Screenshot | Caption |
-| --- | --- |
-| 01 | Choose a field snippet or global reply without leaving your form. |
-| 02 | Search, copy, edit, and organize your global snippet library. |
-| 03 | Keep separate snippets for a particular page and field. |
-| 04 | Use dark mode, light mode, or your system appearance. |
+| Screenshot | Caption                                                           |
+| ---------- | ----------------------------------------------------------------- |
+| 01         | Choose a field snippet or global reply without leaving your form. |
+| 02         | Search, copy, edit, and organize your global snippet library.     |
+| 03         | Keep separate snippets for a particular page and field.           |
+| 04         | Use dark mode, light mode, or your system appearance.             |
 
 ## Validation
 

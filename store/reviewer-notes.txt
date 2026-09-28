@@ -1,4 +1,4 @@
-ClipJect 1.0.0 is a local snippet manager. No login, paid service, API key, or network backend is needed. All code and fonts ship inside the package. Firefox reviewers: the separate source ZIP includes BUILDING.md with exact build commands, tool versions, and environment details.
+ClipJect is a local snippet manager. No login, paid service, API key, or network backend is needed. All code and fonts ship inside the package. Firefox reviewers: the separate source ZIP includes BUILDING.md with exact build commands, tool versions, and environment details.
 
 Suggested review steps:
 1. Install the extension and open a regular HTTP(S) page with a native input or textarea. Do not use a browser settings page, store page, rich-text editor, embedded frame, or shadow-root field.

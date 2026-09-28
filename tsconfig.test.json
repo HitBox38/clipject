@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["node", "chrome", "vite/client", "@testing-library/jest-dom"],
+    "allowJs": true
+  },
+  "include": ["tests", "vitest.config.ts", "playwright.config.ts"]
+}

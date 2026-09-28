@@ -1,4 +1,4 @@
-# Building ClipJect 1.0.0 for store review
+# Building ClipJect for store review
 
 Read this file first when reviewing the source archive. The source is bundled
 and minified with Vite/CRXJS, not obfuscated. All extension code and fonts are
@@ -6,13 +6,11 @@ included locally; no remote service, account, key, or environment file is needed
 
 ## Reproduce the uploaded package
 
-Release environment: Windows x64, Node.js 24.20.0, pnpm 11.19.0.
-The scripts use Node APIs and also support Linux/macOS, but a cross-OS byte-for-
-byte comparison has not been performed. Use the stated release environment
-if a different environment produces a difference.
+Automated releases build on GitHub Actions `ubuntu-latest`, Node.js 24, and
+pnpm 11.19.0. The workflow log records the exact runner and Node patch version.
+Local validation also supports the Node versions listed in `package.json`.
 
-Install Node.js 24.20.0 from the official Node.js distribution. Install the
-package manager with `npm install --global pnpm@11.19.0` if it is unavailable.
+Install Node.js 24 and pnpm 11.19.0 before building.
 Extract the source archive into an empty directory, then run:
 
 ```sh
@@ -25,17 +23,20 @@ build itself needs no external services. The included `pnpm-workspace.yaml`
 allows the dependency build scripts needed for installation.
 
 Tailwind scans only `src/`, keeping reviewer output independent of surrounding
-files. Both extension ZIPs have been reproduced byte-for-byte from an isolated
-source extraction on the stated Windows environment.
+files. The release source ZIP contains the stamped package and manifest versions.
+A checkout from the release tag contains the base version; to reproduce the
+release from that checkout, first run `GITHUB_RUN_NUMBER=<release-run-number>
+node scripts/release-version.mjs` on one line. Do not stamp the source ZIP again.
+Cross-platform byte-for-byte equality is not guaranteed.
 
 Outputs:
 
 - `dist/`: Chrome production build.
 - `dist-firefox/`: Firefox production build.
-- `release/1.0.0/clipject-1.0.0-chrome.zip`: Chrome upload.
-- `release/1.0.0/clipject-1.0.0-firefox.zip`: Firefox upload.
-- `release/1.0.0/clipject-1.0.0-source.zip`: reviewer source archive.
-- `release/1.0.0/SHA256SUMS.txt`: SHA-256 archive checksums.
+- `release/<version>/clipject-<version>-chrome.zip`: Chrome upload.
+- `release/<version>/clipject-<version>-firefox.zip`: Firefox upload.
+- `release/<version>/clipject-<version>-source.zip`: reviewer source archive.
+- `release/<version>/SHA256SUMS.txt`: SHA-256 archive checksums.
 
 The packaged extension is an allowlisted subset of the build output with the
 project LICENSE added. This excludes unused scaffold graphics. The packaging
@@ -50,7 +51,9 @@ the submitted Firefox ZIP, rather than comparing the unfiltered build folder.
 pnpm run build
 pnpm run build:firefox
 pnpm run lint
-node --test tests/*.test.cjs
+pnpm run format:check
+pnpm run typecheck
+pnpm test
 pnpm dlx web-ext@10.7.0 lint --source-dir dist-firefox
 ```
 

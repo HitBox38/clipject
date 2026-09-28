@@ -25,7 +25,7 @@ export function usePerInputSnippets() {
   }, [perInputDb]);
 
   const selectedEntry = selectedEntryKey
-    ? perInputDb[selectedEntryKey] ?? null
+    ? (perInputDb[selectedEntryKey] ?? null)
     : null;
 
   return {

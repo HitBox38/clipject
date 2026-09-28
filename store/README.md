@@ -1,21 +1,25 @@
 # ClipJect submission kit
 
-Version 1.0.0 · prepared September 23, 2026 · not submitted to either store.
+Version 1.0.1 · prepared September 29, 2026.
+
+Download the generated packages from
+[GitHub Releases](https://github.com/HitBox38/clipject/releases). Chrome and Firefox
+submission states are recorded in the release.
 
 Everything is also bundled in
-`release/1.0.0/clipject-1.0.0-submission-kit.zip`. Extract it and open this guide.
+`release/1.0.1/clipject-1.0.1-submission-kit.zip`. Extract it and open this guide.
 
 ## What to upload
 
-| Store / field | File |
-| --- | --- |
-| Chrome: extension | `release/1.0.0/clipject-1.0.0-chrome.zip` |
-| Firefox: add-on | `release/1.0.0/clipject-1.0.0-firefox.zip` |
-| Firefox: source code | `release/1.0.0/clipject-1.0.0-source.zip` |
-| Both: icon | `store/assets/icon-128.png` |
-| Both: screenshots | Four numbered PNGs in `store/assets/` |
-| Chrome: small promotional tile | `store/assets/promo-small-440x280.png` |
-| Chrome: optional marquee | `store/assets/promo-marquee-1400x560.png` |
+| Store / field                  | File                                       |
+| ------------------------------ | ------------------------------------------ |
+| Chrome: extension              | `release/1.0.1/clipject-1.0.1-chrome.zip`  |
+| Firefox: add-on                | `release/1.0.1/clipject-1.0.1-firefox.zip` |
+| Firefox: source code           | `release/1.0.1/clipject-1.0.1-source.zip`  |
+| Both: icon                     | `store/assets/icon-128.png`                |
+| Both: screenshots              | Four numbered PNGs in `store/assets/`      |
+| Chrome: small promotional tile | `store/assets/promo-small-440x280.png`     |
+| Chrome: optional marquee       | `store/assets/promo-marquee-1400x560.png`  |
 
 Paths are relative to the repository root. Do not upload the source ZIP or
 whole repository as the installable extension.
@@ -31,24 +35,24 @@ whole repository as the installable extension.
   [build instructions](../BUILDING.md).
 - [Verification record](VERIFICATION.md).
 
-## Remaining steps in your accounts
+## Submission status and remaining steps
 
-1. The approved privacy policy is included in the push to the public `master`
-   branch. Its URL is
-   `https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.
-   Verify it opens while signed out after the push.
-2. Upload each store's matching ZIP. Firefox also needs the separate source ZIP.
-3. Paste listing fields, attach images, and enter privacy disclosures. Use the
-   GitHub Issues support URL; a support mailbox has not been created. Complete
-   contact/trader/account fields using your own details in the dashboards.
-4. In current desktop Firefox, complete a manual save/paste and popup/library
-   smoke test before submission. Temporary install and background startup
-   passed; full Firefox UI automation was unavailable (see verification).
-5. Check the preview and validation results, then submit for review. Choose
-   visibility, regions, and automatic/manual publication settings as desired.
+The Release workflow submits Chrome and Firefox updates using the configured
+publisher accounts. Firefox submission includes release notes and the reviewer
+source archive. Check the workflow result and GitHub release before attempting
+a manual upload. Pending review does not mean an update is live.
 
-The privacy policy is published with this push; no store listing was submitted.
-Store approval is a separate process.
+Complete a save/paste and popup/library smoke test in current desktop Firefox.
+Chromium has automated runtime coverage; full Firefox UI verification remains
+outstanding. Check signed builds after store approval.
+
+If submission fails, follow [CI retry instructions](../docs/ci.md) and inspect
+the store's validation result before retrying. Account-specific listing and
+distribution settings remain in the publisher dashboards.
+
+The privacy policy is available on the public `master` branch at
+`https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.
+Use the GitHub Issues support URL; no separate support mailbox was created.
 
 ## Rebuild
 
@@ -57,6 +61,9 @@ pnpm install --frozen-lockfile
 pnpm run release
 ```
 
+Local builds use the checked-in base version (currently 1.0.0). The Release
+workflow stamps the release version into both JSON files before packaging.
+The attached source ZIP already has the release version stamped.
 Keep package and manifest versions equal. ZIPs and SHA-256 sums are generated
 in `release/<version>/`, ignored by Git. The source ZIP uses an explicit
 allowlist excluding profiles, secrets, and caches. Refresh screenshots when

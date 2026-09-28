@@ -27,3 +27,10 @@ release/
 
 # Local extension UI verification artifacts
 .tmp-ui/
+
+# Test output and local package cache
+coverage/
+playwright-report/
+test-results/
+.vitest/
+.pnpm-store/

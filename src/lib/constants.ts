@@ -12,8 +12,7 @@ export const STORAGE_KEY_ENABLED = "clipject:enabled:v1" as const;
 export const STORAGE_KEY_THEME = "clipject:theme:v1" as const;
 
 /** chrome.storage.local key for explicitly tracked inputs. */
-export const STORAGE_KEY_TRACKED_INPUTS =
-  "clipject:trackedInputs:v1" as const;
+export const STORAGE_KEY_TRACKED_INPUTS = "clipject:trackedInputs:v1" as const;
 
 /** Current schema version — bump when the storage shape changes. */
 export const SCHEMA_VERSION = 1;
