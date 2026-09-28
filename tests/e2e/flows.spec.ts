@@ -96,6 +96,7 @@ test("options create, edit, clear labels, delete and delete-all persist", async 
   await options.getByLabel("Label (optional)").fill("Greeting");
   await options.getByLabel("Snippet text").fill("Original global");
   await options.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(options.getByLabel("Snippet text")).toBeHidden();
   await expect(
     options.getByText("Original global", { exact: true }),
   ).toBeVisible();
@@ -103,6 +104,7 @@ test("options create, edit, clear labels, delete and delete-all persist", async 
   await options.getByLabel("Snippet label").fill("");
   await options.getByLabel("Snippet text").fill("Edited global");
   await options.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(options.getByLabel("Snippet text")).toBeHidden();
   await options.reload();
   await expect(
     options.getByText("Edited global", { exact: true }),
@@ -128,6 +130,7 @@ test("options create, edit, clear labels, delete and delete-all persist", async 
   await options.getByRole("button", { name: "Edit", exact: true }).click();
   await options.getByLabel("Snippet text").fill("Field edited");
   await options.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(options.getByLabel("Snippet text")).toBeHidden();
   await expect(
     options.getByText("Field edited", { exact: true }),
   ).toBeVisible();

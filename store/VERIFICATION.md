@@ -10,6 +10,10 @@ approval. GitHub Actions repeats verification before stamping and publishing.
 - All 18 Playwright Chromium tests passed with retries disabled. They cover
   save/paste, global snippets, library editing, backup/share flows, native
   Undo/Redo, keyboard handling, repeated fields, dialogs, and field guards.
+- The first PR CI run exposed an ambiguous text locator while the Options save
+  form was still open. The browser test now waits for each save form to close
+  before reading the saved row or reloading; the affected flow passed ten local
+  repetitions without retries.
 - Chrome and Firefox production builds and package validation passed using
   the checked-in base version 1.0.0. The first Release workflow run stamps 1.0.1.
 - The GitHub publishing environment contains both required variable names and
