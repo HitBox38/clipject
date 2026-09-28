@@ -7,7 +7,7 @@ snippets available across all tracked fields.
 
 Chrome and desktop Firefox use separate Manifest V3 builds. Download versioned
 packages from [GitHub Releases](https://github.com/HitBox38/clipject/releases).
-Release notes report Chrome submission status; Firefox submission is manual.
+Release notes report Chrome and Firefox submission status.
 See the [submission kit](store/README.md) for packages, images, and listing copy.
 
 ## Features

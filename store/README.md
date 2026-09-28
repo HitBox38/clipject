@@ -3,8 +3,8 @@
 Version 1.0.1 · prepared September 29, 2026.
 
 Download the generated packages from
-[GitHub Releases](https://github.com/HitBox38/clipject/releases). Chrome submission
-status is recorded in the release; Firefox submission remains manual.
+[GitHub Releases](https://github.com/HitBox38/clipject/releases). Chrome and Firefox
+submission states are recorded in the release.
 
 Everything is also bundled in
 `release/1.0.1/clipject-1.0.1-submission-kit.zip`. Extract it and open this guide.
@@ -37,18 +37,18 @@ whole repository as the installable extension.
 
 ## Submission status and remaining steps
 
-The Release workflow uploads and submits the Chrome update using the configured
-publisher account. Check its result and the GitHub release before attempting a
-manual Chrome upload. A pending review is not a live update.
+The Release workflow submits Chrome and Firefox updates using the configured
+publisher accounts. Firefox submission includes release notes and the reviewer
+source archive. Check the workflow result and GitHub release before attempting
+a manual upload. Pending review does not mean an update is live.
 
-Firefox submission remains manual:
+Complete a save/paste and popup/library smoke test in current desktop Firefox.
+Chromium has automated runtime coverage; full Firefox UI verification remains
+outstanding. Check signed builds after store approval.
 
-1. Download the matching Firefox package and source ZIP from GitHub Releases.
-2. Complete a save/paste and popup/library smoke test in current desktop Firefox.
-   Chromium has automated coverage; full Firefox UI verification is outstanding.
-3. Upload both ZIPs, paste listing fields, and attach the supplied images.
-4. Complete account-specific contact and distribution fields, inspect AMO's
-   validation results, and submit for review.
+If submission fails, follow [CI retry instructions](../docs/ci.md) and inspect
+the store's validation result before retrying. Account-specific listing and
+distribution settings remain in the publisher dashboards.
 
 The privacy policy is available on the public `master` branch at
 `https://github.com/HitBox38/clipject/blob/master/PRIVACY.md`.

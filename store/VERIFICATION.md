@@ -4,7 +4,7 @@ Prepared September 29, 2026. These are local release-candidate checks, not store
 approval. GitHub Actions repeats verification before stamping and publishing.
 
 - `pnpm check` passed on macOS arm64 with Node.js 22.16.0 and pnpm 11.19.0.
-- Oxlint, Oxfmt, application/test typechecking, and all 201 Vitest tests passed.
+- Oxlint, Oxfmt, application/test typechecking, and all 221 Vitest tests passed.
 - Coverage gates passed: 60.68% statements, 59.75% branches, 49.06% functions,
   and 62.10% lines.
 - All 18 Playwright Chromium tests passed with retries disabled. They cover
@@ -16,10 +16,12 @@ approval. GitHub Actions repeats verification before stamping and publishing.
   repetitions without retries.
 - Chrome and Firefox production builds and package validation passed using
   the checked-in base version 1.0.0. The first Release workflow run stamps 1.0.1.
-- The GitHub publishing environment contains both required variable names and
-  all three required secret names; credential validity is checked at submission.
+- The Chrome publishing environment was checked for its two variable names
+  and three secret names. Both stores validate credentials at submission; no
+  live publishing request was made during these checks.
 - No new Firefox runtime or source-reproducibility check was performed for this
-  candidate. Firefox store submission and signed-build installation remain manual.
+  candidate. Signed-build installation checks remain manual. Firefox submission
+  is now automated, including its source archive and release notes.
 
 The earlier verification below applies only to the original 1.0.0 candidate.
 

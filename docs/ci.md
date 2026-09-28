@@ -8,6 +8,10 @@ access and no publishing secrets. The existing aggregate check name is retained
 for branch rules. See [TESTING.md](../TESTING.md) for local commands, test layout,
 coverage gates, and browser failure reports.
 
+Release preparation and fixes land on `dev`. Open a release PR with `dev` as
+the source branch and `master` as the target; merge it when the release is
+approved and its checks pass.
+
 Every push to `master` runs **Release**. This is the repository's current default
 branch. If it is renamed to `main`, update the branch filter in
 `.github/workflows/release.yml` and the environment's deployment branch rule.
