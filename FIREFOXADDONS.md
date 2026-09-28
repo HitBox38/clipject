@@ -1,15 +1,15 @@
 # Firefox Add-ons submission — ClipJect
 
-Prepared September 23, 2026 for version 1.0.0. Not submitted or signed.
+Prepared September 29, 2026 for version 1.0.1. Not submitted or signed.
 
 ## Files and listing fields
 
 | AMO field                                        | Value / file                                                                                                            |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | Distribution                                     | On this site (listed on addons.mozilla.org)                                                                             |
-| Add-on package                                   | `release/1.0.0/clipject-1.0.0-firefox.zip`                                                                              |
+| Add-on package                                   | `release/1.0.1/clipject-1.0.1-firefox.zip`                                                                              |
 | Provide source code?                             | Yes: Vite bundles/minifies the source                                                                                   |
-| Source code                                      | `release/1.0.0/clipject-1.0.0-source.zip`                                                                               |
+| Source code                                      | `release/1.0.1/clipject-1.0.1-source.zip`                                                                               |
 | Build instructions                               | `BUILDING.md`, also in the source archive                                                                               |
 | Name                                             | ClipJect                                                                                                                |
 | Suggested slug                                   | clipject (AMO checks availability)                                                                                      |
