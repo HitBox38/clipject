@@ -246,3 +246,9 @@ implemented migration pipeline for future schema versions yet.
 
 See [AGENTS.md](AGENTS.md) for repository conventions and the original product
 requirements.
+
+## Testing
+
+Run `pnpm check` for lint, typechecking, unit coverage, extension browser tests,
+and Firefox packaging. See [TESTING.md](TESTING.md) for setup, focused commands,
+CI details, and the known browser regressions tracked as expected failures.
