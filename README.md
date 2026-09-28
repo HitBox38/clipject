@@ -35,8 +35,8 @@ See the [submission kit](store/README.md) for packages, images, and listing copy
 ## Current project status
 
 The initial review fixes and clone-title integration fix have been merged.
-The regression suite contains 28 tests, including cloning across extension
-contexts and rejecting occupied clone destinations.
+The regression suite covers extension behavior and release automation, including
+cloning across extension contexts and rejecting occupied clone destinations.
 
 ## Using ClipJect
 
@@ -173,14 +173,14 @@ refresh. Use a production build for an installation independent of the dev serve
 ### Verification
 
 ```sh
-pnpm run build
-pnpm run lint
-node --test tests/*.test.cjs
+pnpm exec playwright install chromium
+pnpm check
 ```
 
-Regression tests use Node's built-in test runner, TypeScript transpilation, and
-mocked extension/DOM contexts. There is no `pnpm test` script. These tests do not
-replace checks in a real browser.
+Regression tests use strict TypeScript, Vitest, and React Testing Library.
+Playwright verifies the built extension and native editing in isolated Chromium
+profiles. Release tests mock the Google and GitHub APIs. See [TESTING.md](TESTING.md)
+for focused commands, coverage gates, and failure reports.
 
 For a manual smoke test, register a field on a basic form, save both snippet
 scopes, paste into a framework-controlled field, test search and keyboard
@@ -191,14 +191,23 @@ backup import/export.
 `pnpm run preview` serves built assets; it does not simulate the extension runtime
 or replace loading the unpacked extension.
 
+### CI and automatic releases
+
+PRs run Vitest coverage, Playwright browser regressions, lint, strict TypeScript
+checks, both browser builds, and package validation. The same checks run on pushes
+to `dev` and `master`. Run browser regressions locally with `pnpm test:e2e`.
+Pushes to `master` generate a new version, submit the Chrome update, and publish
+a GitHub release with downloadable packages and generated notes.
+Chrome availability follows Google's review. See [CI setup](docs/ci.md) for the
+required publishing credentials, version scheme, and retry instructions.
+
 ## Architecture
 
 The stack is Vite 8 with CRXJS, TypeScript 6, React 19, Tailwind CSS 4, shadcn/ui
 components, and Zustand. Zustand manages UI state; extension storage provides
 persistence across browser contexts.
 
-TypeScript stays on the 6.0 release line because the test helpers and
-`typescript-eslint` use its compiler API. Node type definitions stay on version
+TypeScript stays on the 6.0 release line alongside `typescript-eslint`. Node type definitions stay on version
 24 to match the recommended runtime. Updating the shadcn package does not
 regenerate the locally maintained components in `src/components/ui/`.
 
@@ -246,9 +255,3 @@ implemented migration pipeline for future schema versions yet.
 
 See [AGENTS.md](AGENTS.md) for repository conventions and the original product
 requirements.
-
-## Testing
-
-Run `pnpm check` for lint, typechecking, unit coverage, extension browser tests,
-and Firefox packaging. See [TESTING.md](TESTING.md) for setup, focused commands,
-CI details, and the known browser regressions tracked as expected failures.

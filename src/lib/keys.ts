@@ -65,28 +65,38 @@ const getDomPath = (el: Element): string => {
 }
 
 /**
- * Compute a stable identity string for an input element.
+ * Prefer the first stable attribute that uniquely identifies this field among
+ * the page's inputs and textareas. A shared name (or invalid duplicate ID) is
+ * not an identity: continue to the next attribute, then the DOM path.
  *
- * Priority (first non-empty wins):
- *  1. `id`
- *  2. `name`
- *  3. `aria-label`
- *  4. `placeholder`
- *  5. DOM path fallback
- *
- * The result is prefixed with the strategy so callers can reason about stability.
+ * Unique attributes retain their existing storage keys. Ambiguous legacy keys
+ * are deliberately not reused or migrated to an arbitrary matching field;
+ * they remain in the library, unmatched while duplicates exist. If the page
+ * changes which attributes are unique, its field identities can change too.
  */
 export const computeInputSignature = (el: SupportedElement): string => {
-  if (el.id) return `id:${el.id}`;
-  if (el.name) return `name:${el.name}`;
+  const fields = Array.from(document.querySelectorAll("input, textarea"));
+  const attributes = [
+    ["id", "id"],
+    ["name", "name"],
+    ["aria-label", "aria"],
+    ["placeholder", "ph"],
+  ] as const;
 
-  const aria = el.getAttribute("aria-label");
-  if (aria) return `aria:${aria}`;
-
-  if (el.placeholder) return `ph:${el.placeholder}`;
+  for (const [attribute, prefix] of attributes) {
+    const value = el.getAttribute(attribute);
+    if (
+      value &&
+      !fields.some(
+        (other) => other !== el && other.getAttribute(attribute) === value,
+      )
+    ) {
+      return `${prefix}:${value}`;
+    }
+  }
 
   return `path:${getDomPath(el)}`;
-}
+};
 
 /**
  * Build the full composite storage key for a specific input on a specific page.
@@ -143,9 +153,18 @@ export const isPasswordField = (el: Element): boolean => {
 }
 
 /**
- * Returns `true` when the element is a supported input or textarea.
+ * Returns `true` when the element is a supported, editable input or textarea.
  */
 export const isSupportedField = (el: Element): el is SupportedElement => {
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) {
+    return false;
+  }
+
+  // :disabled includes inherited fieldset state and its first-legend exception.
+  if (el.readOnly || el.matches(":disabled") || el.closest("[inert]")) {
+    return false;
+  }
+
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {
     const unsupported = new Set([

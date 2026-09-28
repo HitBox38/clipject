@@ -1,3 +1,4 @@
+import { installEditingCommand } from "../helpers/editing";
 import {
   cleanup,
   fireEvent,
@@ -14,6 +15,7 @@ let h: Awaited<ReturnType<typeof storageContexts>>;
 let target: HTMLTextAreaElement;
 beforeEach(async () => {
   h = await storageContexts();
+  installEditingCommand();
   target = document.createElement("textarea");
   target.setAttribute("aria-label", "Page field");
   document.body.append(target);
@@ -142,3 +144,27 @@ test("Escape exits add mode, then closes browsing; empty results do not intercep
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+test.each(["readonly", "removed", "maxlength"])(
+  "picker preserves the draft and shows feedback for a %s target",
+  async (condition) => {
+    await h.a.saveGlobalSnippet(snippet("g", "Snippet text"));
+    const { user, onClose } = await renderPicker();
+    target.value = "Draft";
+    if (condition === "readonly") target.readOnly = true;
+    else if (condition === "removed") target.remove();
+    else target.maxLength = 2;
+    await user.click(
+      await screen.findByRole("button", { name: "Snippet text" }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      condition === "maxlength"
+        ? "2-character limit"
+        : condition === "removed"
+          ? "no longer on the page"
+          : "no longer editable",
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(target.value).toBe("Draft");
+  },
+);

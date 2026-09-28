@@ -100,3 +100,25 @@ test("password fields never mount even when registered", async () => {
   await flush();
   expect(mountPicker).not.toHaveBeenCalled();
 });
+
+test("adding a duplicate or changing identity closes a stale picker", async () => {
+  a.focus();
+  await flush();
+  vi.mocked(unmountPicker).mockClear();
+  const duplicate = a.cloneNode() as HTMLInputElement;
+  document.body.append(duplicate);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(unmountPicker).toHaveBeenCalled();
+  duplicate.remove();
+  a.blur();
+  a.focus();
+  await flush();
+  vi.mocked(unmountPicker).mockClear();
+  const unrelated = document.createElement("div");
+  document.body.append(unrelated);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(unmountPicker).not.toHaveBeenCalled();
+  a.id = "changed";
+  await vi.advanceTimersByTimeAsync(0);
+  expect(unmountPicker).toHaveBeenCalled();
+});

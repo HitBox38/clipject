@@ -1,3 +1,4 @@
+import { installEditingCommand } from "../helpers/editing";
 import { useState } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
@@ -111,6 +112,7 @@ test.each(["input", "textarea"] as const)(
         </>
       );
     }
+    installEditingCommand();
     render(<Controlled />);
     const el = screen.getByRole("textbox") as
       HTMLInputElement | HTMLTextAreaElement;
@@ -130,3 +132,49 @@ test.each(["input", "textarea"] as const)(
     }
   },
 );
+
+test("shared names use unique placeholders and duplicate IDs use unique labels", () => {
+  document.body.innerHTML =
+    '<input name="note" placeholder="First"><input name="note" placeholder="Second">';
+  let fields = document.querySelectorAll("input");
+  expect(computeInputSignature(fields[0])).toBe("ph:First");
+  expect(computeInputSignature(fields[1])).toBe("ph:Second");
+  document.body.innerHTML =
+    '<input id="duplicate" aria-label="First"><input id="duplicate" aria-label="Second">';
+  fields = document.querySelectorAll("input");
+  expect(computeInputSignature(fields[0])).toBe("aria:First");
+  expect(computeInputSignature(fields[1])).toBe("aria:Second");
+});
+test("identical attributes fall back to separate paths and selector characters are literal", () => {
+  document.body.innerHTML = '<input name="shared"><input name="shared">';
+  const fields = document.querySelectorAll("input");
+  expect(computeInputSignature(fields[0])).toBe("path:input:nth-of-type(1)");
+  expect(computeInputSignature(fields[1])).toBe("path:input:nth-of-type(2)");
+  fields[0].id = 'note["#"]';
+  expect(computeInputSignature(fields[0])).toBe('id:note["#"]');
+});
+
+test("ambiguous legacy snippets stay stored without matching either repeated field", async () => {
+  const { storageContexts } = await import("../helpers/extension");
+  const h = await storageContexts();
+  const { page, input, snippet } = await import("../helpers/data");
+  const legacyKey = "https://source.example/form::Source::name:shared";
+  await h.a.saveInputSnippet(
+    legacyKey,
+    page,
+    { ...input, signature: "name:shared" },
+    snippet("legacy"),
+  );
+  document.title = "Source";
+  document.body.innerHTML =
+    '<input name="shared" placeholder="First"><input name="shared" placeholder="Second">';
+  for (const field of document.querySelectorAll("input")) {
+    const key = buildCompositeKey(
+      computePageKey().key,
+      computeInputSignature(field),
+    );
+    expect(key).not.toBe(legacyKey);
+    expect(await h.a.getInputEntry(key)).toBeNull();
+  }
+  expect((await h.a.getInputEntry(legacyKey))?.snippets[0].id).toBe("legacy");
+});

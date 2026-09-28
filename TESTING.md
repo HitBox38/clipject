@@ -1,6 +1,6 @@
 # Testing ClipJect
 
-Use Node 22.16.0 and the pnpm version pinned in `package.json`.
+CI uses Node 24; locally use a supported Node version from `package.json` and the pnpm version pinned there.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -14,15 +14,15 @@ server on port 4173; leave that port free.
 
 ## Commands
 
-| Command              | Purpose                                                     |
-| -------------------- | ----------------------------------------------------------- |
-| `pnpm test`          | Run all Vitest unit and DOM tests once                      |
-| `pnpm test:watch`    | Watch tests during development                              |
-| `pnpm test:coverage` | Run Vitest with coverage gates and HTML/LCOV reports        |
-| `pnpm test:e2e`      | Build the Chrome extension and run Playwright               |
-| `pnpm test:e2e:ui`   | Build and open the Playwright test UI                       |
-| `pnpm typecheck`     | Check application, tests, fixtures, and test configurations |
-| `pnpm check`         | Lint, typecheck, coverage, browser tests, and Firefox build |
+| Command              | Purpose                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| `pnpm test`          | Run all Vitest unit and DOM tests once                                 |
+| `pnpm test:watch`    | Watch tests during development                                         |
+| `pnpm test:coverage` | Run Vitest with coverage gates and HTML/LCOV reports                   |
+| `pnpm test:e2e`      | Build the Chrome extension and run Playwright                          |
+| `pnpm test:e2e:ui`   | Build and open the Playwright test UI                                  |
+| `pnpm typecheck`     | Check application, tests, fixtures, and test configurations            |
+| `pnpm check`         | Lint, typecheck, coverage, browser tests, and Chrome/Firefox packaging |
 
 For a focused run:
 
@@ -81,26 +81,20 @@ loading. Retries are disabled so intermittent failures remain visible. Unexpecte
 failures retain traces and screenshots. Use those artifacts to diagnose failures
 before increasing timeouts or adding retries.
 
-## Existing browser defects
+## Browser regression coverage
 
-`known-regressions.spec.ts` contains executable desired-behavior tests for the
-six defects documented during the September 28 QA session. These are **expected
-failures**, not passing product behavior and not skipped tests:
+`regressions.spec.ts` protects the six fixes merged into `dev`: host-field Enter,
+Undo, readonly fields, repeated-name identity, maxlength, and modal layering.
+These are ordinary passing tests; there are no expected-failure annotations.
+`native-editing.spec.ts` also checks native input types, Undo/Redo, repeated
+inserts, normalization, length limits changed during focus/selection, failed
+editing commands, and overlay cleanup. These tests replace the old standalone
+Chrome scripts and use the same Playwright runner and reports as extension flows.
 
-| ID    | Desired behavior                              | Current defect                         |
-| ----- | --------------------------------------------- | -------------------------------------- |
-| QA-01 | Enter preserves a textarea draft              | Picker intercepts Enter                |
-| QA-02 | Undo restores the replaced draft              | Native setter bypasses undo history    |
-| QA-03 | Readonly fields offer no insertion            | Supported-field check accepts them     |
-| QA-04 | Repeated names retain separate field snippets | Name-only identity collides            |
-| QA-05 | Insertion respects maxlength                  | Programmatic setter bypasses the limit |
-| QA-06 | Picker in a native modal accepts clicks       | Picker sits below the top layer        |
-
-The expected-failure annotation is applied only after fixture setup succeeds.
-When fixing a defect, remove its annotation and make the desired-behavior test
-pass. Unexpected passes fail the run so stale annotations cannot silently remain.
-Do not use expected failures for new unexplained failures. This testing upgrade
-does not change those product behaviors.
+jsdom cannot execute native editing commands. DOM tests substitute that browser
+boundary; Chromium tests verify the real command and Undo history. Release tests
+use mocked HTTP responses and temporary directories; they never publish releases
+or send requests to a store.
 
 ## Coverage policy
 
@@ -118,18 +112,21 @@ coverage grows; do not add assertions solely to execute lines.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pull requests, pushes to `main`, and manual
+`.github/workflows/ci.yml` runs on pull requests, pushes to `dev` and `master`, and manual
 workflow dispatch. Independent jobs run:
 
 1. Lint, application/test typechecking, and Vitest coverage.
-2. Chrome build and the complete Chromium extension suite, including the visible
-   expected-failure reproductions.
-3. Firefox production packaging.
+2. Chrome build and the complete Chromium extension suite, including the fixed-behavior
+   regression cases.
+3. Chrome and Firefox builds and store-package validation.
 
-CI uses the lockfile, pinned Node/pnpm, a pnpm cache, read-only repository
+CI uses the lockfile, Node 24 and pinned pnpm, a pnpm cache, read-only repository
 permissions, timeouts, and cancellation of superseded runs. Coverage and browser
 reports are retained for 14 days. Firefox packaging verifies compilation and
 manifest generation; Firefox runtime behavior still needs separate testing.
+The aggregate **Tests, lint, and builds** check preserves the existing required
+check name. Release verification also runs typechecking, coverage, and Playwright
+before packaging; publishing remains in its existing separate job.
 
 Configure these jobs as required checks in repository branch protection if
 merges must be blocked until they succeed.
@@ -142,3 +139,9 @@ writes, failed replacements → `storage.test.ts`; share validation →
 `validation.test.ts`; keyboard → `keyboard.test.ts` and `picker.test.tsx`; focus
 → `observer.test.ts`; explicit save → `picker.test.tsx`; selector cancellation
 → `selector.test.ts`.
+
+The later `dev` regressions were also migrated: field identity → `keys-paste`
+and `observer`; editability/maxlength → `editability-length`, `selector`, and
+`picker`; standalone native-browser scripts → `native-editing.spec.ts`; release
+versioning and mocked GitHub/Chrome publication → `unit/release.test.ts`.
+`pnpm test:browser` remains an alias for `pnpm test:e2e` for release compatibility.

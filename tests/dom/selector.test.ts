@@ -65,3 +65,25 @@ test("selecting a field persists its signature, restores styles and focuses it",
   expect(el).toHaveFocus();
   expect(selector.isElementSelectorActive()).toBe(false);
 });
+
+for (const tag of ["input", "textarea"] as const) {
+  test.each(["readonly", "disabled", "fieldset", "inert"])(
+    `${tag}: %s prevents highlighting and registration`,
+    async (lock) => {
+      const field = document.createElement(tag);
+      const parent = document.createElement(
+        lock === "fieldset" ? "fieldset" : "div",
+      );
+      parent.append(field);
+      document.body.append(parent);
+      if (lock === "fieldset") parent.setAttribute("disabled", "");
+      else if (lock === "inert") parent.setAttribute("inert", "");
+      else field.setAttribute(lock, "");
+      selector.startElementSelector();
+      fireEvent.mouseOver(field);
+      fireEvent.click(field);
+      expect(field.style.outline).toBe("");
+      expect(await h.a.getTrackedInputs()).toEqual([]);
+    },
+  );
+}

@@ -83,3 +83,17 @@ function Form() {
   );
 }
 createRoot(document.getElementById("root")!).render(<Form />);
+
+// Browser-level helper tests exercise native editing and top-layer behavior
+// that jsdom cannot implement. Main flows load the actual built extension.
+import { setNativeValue } from "../../../src/lib/paste";
+import { placeOverlay } from "../../../src/content/overlay-layer";
+declare global {
+  interface Window {
+    clipjectTest: {
+      setNativeValue: typeof setNativeValue;
+      placeOverlay: typeof placeOverlay;
+    };
+  }
+}
+window.clipjectTest = { setNativeValue, placeOverlay };

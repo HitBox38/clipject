@@ -35,6 +35,7 @@ import type { ClipjectMessage } from "@/types/messages";
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
 let activeEl: SupportedElement | null = null;
+let activeSignature: string | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let extensionEnabled = true;
 
@@ -144,6 +145,7 @@ const openPickerFor = async (el: SupportedElement): Promise<void> => {
 
   const { key: pageKey, meta: pageMeta } = computePageKey();
   const inputSignature = computeInputSignature(el);
+  activeSignature = inputSignature;
   const compositeKey = buildCompositeKey(pageKey, inputSignature);
   const inputMeta = buildInputMeta(el);
 
@@ -158,8 +160,29 @@ const openPickerFor = async (el: SupportedElement): Promise<void> => {
 
 const closePicker = (): void => {
   activeEl = null;
+  activeSignature = null;
   unmountPicker();
 }
+
+/** Close stale pickers when an SPA changes a field's identity or duplicates it. */
+const watchInputIdentity = (): void => {
+  if (!document.body) return;
+  const observer = new MutationObserver(() => {
+    if (
+      activeEl &&
+      (!activeEl.isConnected ||
+        computeInputSignature(activeEl) !== activeSignature)
+    ) {
+      closePicker();
+    }
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["id", "name", "aria-label", "placeholder"],
+  });
+};
 
 // ---------------------------------------------------------------------------
 // SPA navigation watchers
@@ -256,6 +279,7 @@ export const initObserver = (): void => {
   window.addEventListener("popstate", onSpaNavigation);
   window.addEventListener("hashchange", onSpaNavigation);
   watchTitleChanges();
+  watchInputIdentity();
 
   // Storage change watchers (enabled state + tracked inputs).
   watchStorageChanges();
