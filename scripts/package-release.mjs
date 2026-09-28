@@ -16,9 +16,14 @@ async function filesAt(directory, prefix = "") {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const name = prefix + entry.name;
     if (entry.isDirectory()) {
-      result.push(...await filesAt(path.join(directory, entry.name), name + "/"));
+      result.push(
+        ...(await filesAt(path.join(directory, entry.name), name + "/")),
+      );
     } else if (entry.isFile()) {
-      result.push({ name, data: await readFile(path.join(directory, entry.name)) });
+      result.push({
+        name,
+        data: await readFile(path.join(directory, entry.name)),
+      });
     } else {
       throw new Error(`Unexpected symbolic link: ${name}`);
     }
@@ -30,7 +35,7 @@ async function filesAt(directory, prefix = "") {
 // No archiver executable or additional dependency is needed by AMO reviewers.
 const crcTable = Array.from({ length: 256 }, (_, value) => {
   for (let i = 0; i < 8; i++) {
-    value = (value >>> 1) ^ ((value & 1) ? 0xedb88320 : 0);
+    value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
   }
   return value >>> 0;
 });
@@ -79,25 +84,36 @@ function zip(files) {
 
 async function validateBuild(directory, firefox) {
   // Exclude copied Vite scaffold graphics and duplicate public assets.
-  const files = (await filesAt(directory)).filter(({ name }) =>
-    name === "manifest.json" || name === "service-worker-loader.js" ||
-    name === "THIRD-PARTY-LICENSES.txt" || name === "OUTFIT-OFL.txt" ||
-    name.startsWith("assets/") || name.startsWith("src/") ||
-    name.startsWith("public/icons/") || name.startsWith("icons/"));
+  const files = (await filesAt(directory)).filter(
+    ({ name }) =>
+      name === "manifest.json" ||
+      name === "service-worker-loader.js" ||
+      name === "THIRD-PARTY-LICENSES.txt" ||
+      name === "OUTFIT-OFL.txt" ||
+      name.startsWith("assets/") ||
+      name.startsWith("src/") ||
+      name.startsWith("public/icons/") ||
+      name.startsWith("icons/"),
+  );
   const names = new Set(files.map(({ name }) => name));
-  const built = JSON.parse(files.find(({ name }) => name === "manifest.json").data);
+  const built = JSON.parse(
+    files.find(({ name }) => name === "manifest.json").data,
+  );
   assert.equal(built.version, manifest.version);
   assert.equal(built.description, manifest.description);
   assert.equal(built.manifest_version, 3);
   assert(built.description.length <= 132);
   const refs = [
-    built.action.default_popup, built.options_page,
-    ...Object.values(built.icons), ...Object.values(built.action.default_icon),
+    built.action.default_popup,
+    built.options_page,
+    ...Object.values(built.icons),
+    ...Object.values(built.action.default_icon),
     ...(built.background.scripts ?? [built.background.service_worker]),
     ...built.content_scripts.flatMap((script) => script.js),
     ...built.web_accessible_resources.flatMap((resource) => resource.resources),
   ];
-  for (const ref of refs) assert(names.has(ref), `Missing package asset: ${ref}`);
+  for (const ref of refs)
+    assert(names.has(ref), `Missing package asset: ${ref}`);
   for (const [size, ref] of Object.entries(built.icons)) {
     const png = files.find(({ name }) => name === ref).data;
     assert.equal(png.readUInt32BE(16), Number(size));
@@ -107,12 +123,20 @@ async function validateBuild(directory, firefox) {
   if (firefox) {
     assert(!built.background.service_worker);
     assert(built.background.scripts.length > 0);
-    assert.equal(built.browser_specific_settings.gecko.id,
-      "clipject@tomer-norman.dev");
-    assert.deepEqual(built.browser_specific_settings.gecko
-      .data_collection_permissions.required, ["none"]);
-    assert(built.web_accessible_resources.every((item) =>
-      !("use_dynamic_url" in item)));
+    assert.equal(
+      built.browser_specific_settings.gecko.id,
+      "clipject@tomer-norman.dev",
+    );
+    assert.deepEqual(
+      built.browser_specific_settings.gecko.data_collection_permissions
+        .required,
+      ["none"],
+    );
+    assert(
+      built.web_accessible_resources.every(
+        (item) => !("use_dynamic_url" in item),
+      ),
+    );
   } else {
     assert(built.background.service_worker);
     assert(!built.browser_specific_settings);
@@ -120,17 +144,28 @@ async function validateBuild(directory, firefox) {
   for (const { name, data } of files) {
     assert(!name.endsWith(".map"), `Source map in package: ${name}`);
     if (/\.(js|html)$/.test(name)) {
-      assert(!/localhost:5173|@vite\/client|react-refresh/.test(data.toString()),
-        `Development code in ${name}`);
+      assert(
+        !/localhost:5173|@vite\/client|react-refresh/.test(data.toString()),
+        `Development code in ${name}`,
+      );
     }
   }
-  files.push({ name: "LICENSE", data: await readFile(path.join(root, "LICENSE")) });
+  files.push({
+    name: "LICENSE",
+    data: await readFile(path.join(root, "LICENSE")),
+  });
   return files;
 }
 
 const archives = [];
-for (const [browser, directory] of [["chrome", "dist"], ["firefox", "dist-firefox"]]) {
-  const files = await validateBuild(path.join(root, directory), browser === "firefox");
+for (const [browser, directory] of [
+  ["chrome", "dist"],
+  ["firefox", "dist-firefox"],
+]) {
+  const files = await validateBuild(
+    path.join(root, directory),
+    browser === "firefox",
+  );
   const name = `clipject-${manifest.version}-${browser}.zip`;
   await writeFile(path.join(release, name), zip(files));
   archives.push(name);
@@ -139,14 +174,40 @@ for (const [browser, directory] of [["chrome", "dist"], ["firefox", "dist-firefo
 // Explicit allowlist: no personal data, credentials, workspace profiles, caches,
 // agent instructions, .git, node_modules, or built output enters the source ZIP.
 const source = [];
-for (const name of ["src", "public", "scripts", "tests", "store", "docs", "package.json",
-  "pnpm-lock.yaml", "pnpm-workspace.yaml", "manifest.json", "vite.config.ts",
-  "tsconfig.json", "tsconfig.app.json", "tsconfig.node.json", "eslint.config.js",
-  "components.json", "index.html", "LICENSE", "README.md", "BUILDING.md",
-  "CHROMEWEBSTORE.md", "FIREFOXADDONS.md", "PRIVACY.md", ".gitignore"]) {
+for (const name of [
+  "src",
+  "public",
+  "scripts",
+  "tests",
+  "store",
+  "docs",
+  "package.json",
+  "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
+  "manifest.json",
+  "vite.config.ts",
+  "tsconfig.json",
+  "tsconfig.app.json",
+  "tsconfig.node.json",
+  ".oxlintrc.json",
+  ".oxfmtrc.json",
+  "tsconfig.test.json",
+  "vitest.config.ts",
+  "playwright.config.ts",
+  "TESTING.md",
+  "components.json",
+  "index.html",
+  "LICENSE",
+  "README.md",
+  "BUILDING.md",
+  "CHROMEWEBSTORE.md",
+  "FIREFOXADDONS.md",
+  "PRIVACY.md",
+  ".gitignore",
+]) {
   const location = path.join(root, name);
   if ((await stat(location)).isDirectory()) {
-    source.push(...await filesAt(location, name + "/"));
+    source.push(...(await filesAt(location, name + "/")));
   } else {
     source.push({ name, data: await readFile(location) });
   }
@@ -162,19 +223,32 @@ for (const name of archives) {
 }
 await writeFile(path.join(release, "SHA256SUMS.txt"), sums.join("\n") + "\n");
 const kit = await filesAt(path.join(root, "store"), "store/");
-for (const name of ["CHROMEWEBSTORE.md", "FIREFOXADDONS.md", "PRIVACY.md",
-  "LICENSE", "BUILDING.md"]) {
+for (const name of [
+  "CHROMEWEBSTORE.md",
+  "FIREFOXADDONS.md",
+  "PRIVACY.md",
+  "LICENSE",
+  "BUILDING.md",
+]) {
   kit.push({ name, data: await readFile(path.join(root, name)) });
 }
 for (const name of [...archives, "SHA256SUMS.txt"]) {
-  kit.push({ name: `release/${manifest.version}/${name}`,
-    data: await readFile(path.join(release, name)) });
+  kit.push({
+    name: `release/${manifest.version}/${name}`,
+    data: await readFile(path.join(release, name)),
+  });
 }
-kit.push({ name: "START-HERE.txt", data: Buffer.from(
-  "Open store/README.md for the upload guide.\n" +
-  `Upload ZIPs are in release/${manifest.version}/.\n` +
-  "Images and listing copy are in store/.\n" +
-  "Publish PRIVACY.md at a public URL before Chrome submission.\n") });
-await writeFile(path.join(release,
-  `clipject-${manifest.version}-submission-kit.zip`), zip(kit));
+kit.push({
+  name: "START-HERE.txt",
+  data: Buffer.from(
+    "Open store/README.md for the upload guide.\n" +
+      `Upload ZIPs are in release/${manifest.version}/.\n` +
+      "Images and listing copy are in store/.\n" +
+      "Publish PRIVACY.md at a public URL before Chrome submission.\n",
+  ),
+});
+await writeFile(
+  path.join(release, `clipject-${manifest.version}-submission-kit.zip`),
+  zip(kit),
+);
 console.log(`Release files: ${release}`);

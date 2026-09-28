@@ -134,7 +134,7 @@ InputEntry should include:
 - Prefer `async/await`
 - Keep React components small; state in Zustand where appropriate
 - No HTML in markdown outputs
-- Use Prettier (80 char print width)
+- Use Oxfmt (80 char print width); run `pnpm format`
 
 ## Deliverables expected from Cursor
 

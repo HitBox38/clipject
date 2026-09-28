@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, types and unit tests
+    name: Lint, formatting, types and unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,6 +33,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test:coverage
       - uses: actions/upload-artifact@v4

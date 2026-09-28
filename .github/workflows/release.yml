@@ -41,6 +41,7 @@ jobs:
           pnpm exec playwright install --with-deps chromium
           pnpm run test:browser
       - run: pnpm run lint
+      - run: pnpm format:check
       - name: Generate version
         id: version
         run: node scripts/release-version.mjs

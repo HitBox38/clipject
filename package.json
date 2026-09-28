@@ -15,14 +15,16 @@
     "build": "tsc -b && vite build",
     "build:firefox": "tsc -b && vite build --mode firefox",
     "release": "pnpm run build && pnpm run build:firefox && node scripts/package-release.mjs",
-    "lint": "eslint .",
+    "lint": "oxlint .",
     "preview": "vite preview",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "pnpm build && playwright test",
     "test:e2e:ui": "pnpm build && playwright test --ui",
     "typecheck": "tsc -b && tsc --noEmit -p tsconfig.test.json",
-    "check": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm test:e2e && pnpm release"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:coverage && pnpm test:e2e && pnpm release",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -42,7 +44,6 @@
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.7.1",
-    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -53,14 +54,10 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/coverage-v8": "^5.0.2",
-    "eslint": "^10.11.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.7",
-    "globals": "^17.12.0",
     "jsdom": "^30.1.1",
-    "prettier": "^3.9.9",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.70.1",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "typescript": "~7.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.2"
   }
