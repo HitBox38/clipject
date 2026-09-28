@@ -3,6 +3,13 @@
 Prepared September 23, 2026 for version 1.0.0. Not submitted or published.
 Start with [the upload guide](store/README.md).
 
+Automation setup updated September 28, 2026: pushes to `master` now have a
+workflow for versioned builds, Chrome Web Store v2 submission, and GitHub
+releases. Configure the environment in [CI setup](docs/ci.md) before enabling
+publishing. This change itself has not uploaded or published a version.
+Generated release versions and submission states are recorded in GitHub
+Releases; the 1.0.0 paths below describe the original manual submission kit.
+
 ## Upload and listing fields
 
 | Dashboard field | Value / file |
@@ -107,8 +114,9 @@ Do not upload the source archive as the Chrome extension package.
 | --- | --- | --- | --- |
 | 1.0.0 | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
-If 1.0.0 already exists in your dashboard, increment both `manifest.json` and
-`package.json` and rebuild before uploading.
+For manual uploads, increment both `manifest.json` and `package.json` before
+rebuilding. Automated releases stamp both files using the base version plus
+the workflow run number; see [versioning](docs/ci.md#versioning-and-artifacts).
 
 Requirements checked against the official
 [listing guide](https://developer.chrome.com/docs/webstore/cws-dashboard-listing),

@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+# Queue pushes instead of discarding a pending release. Never interrupt uploads.
+concurrency:
+  group: chrome-web-store-release
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  build:
+    name: Verify and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - name: Browser regressions
+        run: |
+          export CLIPJECT_TEST_BROWSER="$(command -v google-chrome)"
+          pnpm run test:browser
+      - run: pnpm run lint
+      - name: Generate version
+        id: version
+        run: node scripts/release-version.mjs
+      - run: pnpm run release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.run_id }}
+          path: release/${{ steps.version.outputs.version }}/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+  publish:
+    name: Publish Chrome and GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: chrome-web-store
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.run_id }}
+          path: release/${{ needs.build.outputs.version }}/
+      - name: Submit Chrome update and publish GitHub release
+        run: node scripts/publish-release.mjs
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
