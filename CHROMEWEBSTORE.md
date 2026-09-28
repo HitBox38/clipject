@@ -12,19 +12,19 @@ Releases; the 1.0.0 paths below describe the original manual submission kit.
 
 ## Upload and listing fields
 
-| Dashboard field | Value / file |
-| --- | --- |
-| Package | `release/1.0.0/clipject-1.0.0-chrome.zip` |
-| Name | ClipJect |
-| Summary | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
-| Detailed description | Copy `store/listing-description.txt` |
-| Primary language | English |
-| Category | Productivity; choose Tools if offered as a subcategory |
-| Publisher | Tomer Norman (match your existing publisher account) |
-| Support URL | `https://github.com/HitBox38/clipject/issues` |
-| Homepage | `https://github.com/HitBox38/clipject` |
-| Price | Free |
-| Suggested visibility / regions | Public / All regions |
+| Dashboard field                | Value / file                                                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Package                        | `release/1.0.0/clipject-1.0.0-chrome.zip`                                                                               |
+| Name                           | ClipJect                                                                                                                |
+| Summary                        | Save reusable text and paste it into fields you choose. Keep snippets for a specific field or use them across websites. |
+| Detailed description           | Copy `store/listing-description.txt`                                                                                    |
+| Primary language               | English                                                                                                                 |
+| Category                       | Productivity; choose Tools if offered as a subcategory                                                                  |
+| Publisher                      | Tomer Norman (match your existing publisher account)                                                                    |
+| Support URL                    | `https://github.com/HitBox38/clipject/issues`                                                                           |
+| Homepage                       | `https://github.com/HitBox38/clipject`                                                                                  |
+| Price                          | Free                                                                                                                    |
+| Suggested visibility / regions | Public / All regions                                                                                                    |
 
 Use your existing verified account email wherever the dashboard requires a
 publisher contact. No separate support mailbox was created. Complete any
@@ -39,11 +39,11 @@ local library of field-specific and global snippets.
 
 Paste each explanation into its corresponding dashboard field.
 
-| Permission | Justification |
-| --- | --- |
-| storage | Save snippets, labels, timestamps, selected-field identifiers, associated page details, and appearance/enabled preferences in local browser storage. This provides the snippet library without a server or cloud synchronization. |
-| activeTab | Access the active tab after the user invokes ClipJect from the toolbar so they can choose which field to use with snippets. This supports explicit field selection on the page they are using. |
-| scripting | Inject ClipJect's packaged content script into the active tab when field selection is requested and the already-open page does not yet have a responding content script. Only bundled extension code is injected. |
+| Permission                                     | Justification                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| storage                                        | Save snippets, labels, timestamps, selected-field identifiers, associated page details, and appearance/enabled preferences in local browser storage. This provides the snippet library without a server or cloud synchronization.                                                                                                                                  |
+| activeTab                                      | Access the active tab after the user invokes ClipJect from the toolbar so they can choose which field to use with snippets. This supports explicit field selection on the page they are using.                                                                                                                                                                     |
+| scripting                                      | Inject ClipJect's packaged content script into the active tab when field selection is requested and the already-open page does not yet have a responding content script. Only bundled extension code is injected.                                                                                                                                                  |
 | Site access / content-script match on all URLs | Recognize previously selected text fields and show their saved snippets across websites chosen by the user, including after reloads. Restricting this to a fixed domain would prevent the cross-site snippet feature. The picker opens only for registered fields or fields with snippets; password fields are excluded. Page/field metadata is processed locally. |
 
 Broad site access comes from content-script matches, not a separate
@@ -95,24 +95,24 @@ responded publicly during preparation.
 All files are in `store/assets/`. Numbered screenshots are 1280 × 800 PNGs
 captured from the real extension using sample content, without browser chrome.
 
-| Dashboard slot | File |
-| --- | --- |
-| Icon, 128 × 128 | `icon-128.png` |
-| Screenshot 1 | `01-snippet-picker-1280x800.png` |
-| Screenshot 2 | `02-global-library-1280x800.png` |
-| Screenshot 3 | `03-field-library-1280x800.png` |
-| Screenshot 4 | `04-dark-library-1280x800.png` |
-| Small promotional tile, 440 × 280 | `promo-small-440x280.png` |
-| Optional marquee, 1400 × 560 | `promo-marquee-1400x560.png` |
+| Dashboard slot                    | File                             |
+| --------------------------------- | -------------------------------- |
+| Icon, 128 × 128                   | `icon-128.png`                   |
+| Screenshot 1                      | `01-snippet-picker-1280x800.png` |
+| Screenshot 2                      | `02-global-library-1280x800.png` |
+| Screenshot 3                      | `03-field-library-1280x800.png`  |
+| Screenshot 4                      | `04-dark-library-1280x800.png`   |
+| Small promotional tile, 440 × 280 | `promo-small-440x280.png`        |
+| Optional marquee, 1400 × 560      | `promo-marquee-1400x560.png`     |
 
 Use `store/reviewer-notes.txt` for test instructions if a field is offered.
 Do not upload the source archive as the Chrome extension package.
 
 ## Version history
 
-| Version | Date | Changes | Status |
-| --- | --- | --- | --- |
-| 1.0.0 | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
+| Version | Date       | Changes                                                                                                                                             | Status                  |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1.0.0   | 2026-09-23 | First store candidate: field picker, global and field libraries, editing, search, keyboard controls, themes, backup/share/clone, and data deletion. | Prepared, not submitted |
 
 For manual uploads, increment both `manifest.json` and `package.json` before
 rebuilding. Automated releases stamp both files using the base version plus

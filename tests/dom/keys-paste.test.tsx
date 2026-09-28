@@ -115,7 +115,8 @@ test.each(["input", "textarea"] as const)(
     installEditingCommand();
     render(<Controlled />);
     const el = screen.getByRole("textbox") as
-      HTMLInputElement | HTMLTextAreaElement;
+      | HTMLInputElement
+      | HTMLTextAreaElement;
     const onInput = vi.fn(),
       onChange = vi.fn();
     document.addEventListener("input", onInput);

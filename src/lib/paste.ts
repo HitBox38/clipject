@@ -2,7 +2,8 @@ import { isSupportedField } from "./keys";
 
 type SupportedElement = HTMLInputElement | HTMLTextAreaElement;
 
-const insertionError = "This field couldn’t accept the snippet with Undo support.";
+const insertionError =
+  "This field couldn’t accept the snippet with Undo support.";
 
 const prepareInsertion = (el: SupportedElement, value: string) => {
   const supportsMaxLength =

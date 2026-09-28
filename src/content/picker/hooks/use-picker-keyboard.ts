@@ -48,58 +48,61 @@ export function usePickerKeyboard({
   }, [items, highlightedIndex, onSelect, onClose]);
 
   // A stable handler that reads everything from refs.
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
-    // Opening the picker does not opt the host field into snippet navigation.
-    // Keep its Enter and arrow keys native, including after hovering a snippet.
-    // Shadow DOM retargets event.target, so inspect the original event path.
-    const path = e.composedPath();
-    const target = path[0] as HTMLElement | undefined;
-    if (
-      e.key !== "Escape" &&
-      (!pickerRef.current ||
-        !path.includes(pickerRef.current) ||
-        target?.closest?.("button, select") ||
-        e.altKey ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.shiftKey)
-    ) {
-      return;
-    }
-    const currentItems = itemsRef.current;
-    const len = currentItems.length;
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
+      // Opening the picker does not opt the host field into snippet navigation.
+      // Keep its Enter and arrow keys native, including after hovering a snippet.
+      // Shadow DOM retargets event.target, so inspect the original event path.
+      const path = e.composedPath();
+      const target = path[0] as HTMLElement | undefined;
+      if (
+        e.key !== "Escape" &&
+        (!pickerRef.current ||
+          !path.includes(pickerRef.current) ||
+          target?.closest?.("button, select") ||
+          e.altKey ||
+          e.ctrlKey ||
+          e.metaKey ||
+          e.shiftKey)
+      ) {
+        return;
+      }
+      const currentItems = itemsRef.current;
+      const len = currentItems.length;
 
-    switch (e.key) {
-      case "ArrowDown":
-        if (!len) return;
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev < len - 1 ? prev + 1 : 0));
-        break;
+      switch (e.key) {
+        case "ArrowDown":
+          if (!len) return;
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev < len - 1 ? prev + 1 : 0));
+          break;
 
-      case "ArrowUp":
-        if (!len) return;
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : len - 1));
-        break;
+        case "ArrowUp":
+          if (!len) return;
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : len - 1));
+          break;
 
-      case "Enter":
-        if (!len || highlightRef.current < 0) return;
-        e.preventDefault();
-        {
-          const idx = highlightRef.current;
-          if (idx >= 0 && idx < len) {
-            onSelectRef.current(currentItems[idx]);
+        case "Enter":
+          if (!len || highlightRef.current < 0) return;
+          e.preventDefault();
+          {
+            const idx = highlightRef.current;
+            if (idx >= 0 && idx < len) {
+              onSelectRef.current(currentItems[idx]);
+            }
           }
-        }
-        break;
+          break;
 
-      case "Escape":
-        e.preventDefault();
-        onCloseRef.current();
-        break;
-    }
-  }, [pickerRef]);
+        case "Escape":
+          e.preventDefault();
+          onCloseRef.current();
+          break;
+      }
+    },
+    [pickerRef],
+  );
 
   useEffect(() => {
     if (!enabled) return;

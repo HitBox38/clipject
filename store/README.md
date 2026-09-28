@@ -7,15 +7,15 @@ Everything is also bundled in
 
 ## What to upload
 
-| Store / field | File |
-| --- | --- |
-| Chrome: extension | `release/1.0.0/clipject-1.0.0-chrome.zip` |
-| Firefox: add-on | `release/1.0.0/clipject-1.0.0-firefox.zip` |
-| Firefox: source code | `release/1.0.0/clipject-1.0.0-source.zip` |
-| Both: icon | `store/assets/icon-128.png` |
-| Both: screenshots | Four numbered PNGs in `store/assets/` |
-| Chrome: small promotional tile | `store/assets/promo-small-440x280.png` |
-| Chrome: optional marquee | `store/assets/promo-marquee-1400x560.png` |
+| Store / field                  | File                                       |
+| ------------------------------ | ------------------------------------------ |
+| Chrome: extension              | `release/1.0.0/clipject-1.0.0-chrome.zip`  |
+| Firefox: add-on                | `release/1.0.0/clipject-1.0.0-firefox.zip` |
+| Firefox: source code           | `release/1.0.0/clipject-1.0.0-source.zip`  |
+| Both: icon                     | `store/assets/icon-128.png`                |
+| Both: screenshots              | Four numbered PNGs in `store/assets/`      |
+| Chrome: small promotional tile | `store/assets/promo-small-440x280.png`     |
+| Chrome: optional marquee       | `store/assets/promo-marquee-1400x560.png`  |
 
 Paths are relative to the repository root. Do not upload the source ZIP or
 whole repository as the installable extension.
